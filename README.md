@@ -4,7 +4,7 @@ Apps propias para el iDrive 8 (MGU), instaladas desde la [MGU Store](https://git
 
 ## Apps
 
-- **Cronómetro M340i** (`jorge_dragtimer`): 0-100, 100-200, 1/8 y 1/4 de milla con récords, usando los sensores del carro.
+- **CASPER DRAGY'S** (`jorge_dragtimer`): 0-100, 100-200, 1/8 y 1/4 de milla con récords, usando los sensores del carro.
 
 ## Instalar
 

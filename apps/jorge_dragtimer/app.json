@@ -1,8 +1,8 @@
 {
   "id": "jorge_dragtimer",
-  "title": "Cronómetro M340i",
+  "title": "CASPER DRAGY'S",
   "description": "0-100, 100-200 y 1/4 de milla con récords (basado en Drag Timer de idrive7-apps, MIT)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "vendor": "custom",
   "loggingId": "OAJ1",
   "iconGlyph": "flag",
@@ -28,7 +28,7 @@
     {
       "name": "MAIN",
       "kind": "canvas",
-      "title": "Cronómetro",
+      "title": "CASPER DRAGY'S",
       "buttons": [
         [
           "BTN_ACTION",
