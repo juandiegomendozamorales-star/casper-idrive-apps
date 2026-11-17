@@ -1,0 +1,392 @@
+{
+  "id": "jorge_essentials",
+  "title": "ESSENTIALS",
+  "description": "IAT, aceite de motor, aceite de caja y refrigerante en grande, con rangos propios en °F y minutos para estar listo",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAJ2",
+  "iconGlyph": "temp",
+  "mguHmi": [
+    "ID8"
+  ],
+  "requires": {
+    "idrive7-renderd": "2.1.15"
+  },
+  "signals": {
+    "de.bmw.infotainment.vehicle.CDS": {
+      "statusEngineSpeed2": "rs",
+      "statusEngineTemperature": "rs"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infrastructure.analytics.BasicDataSet": {
+      "_optional": "temperatura de aceite de caja por señal (si la caja no responde)",
+      "basicDataSet": "s"
+    },
+    "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {
+      "_instances": "SystemFunctionsInternalTasuInst1",
+      "_methods": [
+        "sendTasuRequest"
+      ],
+      "_broadcasts": [
+        "sendTasuResponse"
+      ]
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "ESSENTIALS",
+      "buttons": [
+        [
+          "BTN_SETTINGS",
+          "Rangos"
+        ]
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "key": "oilMin",
+      "label": "Aceite motor: mínimo (listo)",
+      "type": "number",
+      "unit": "°F",
+      "default": 175,
+      "steps": [
+        120,
+        125,
+        130,
+        135,
+        140,
+        145,
+        150,
+        155,
+        160,
+        165,
+        170,
+        175,
+        180,
+        185,
+        190,
+        195,
+        200,
+        205,
+        210,
+        215,
+        220,
+        225,
+        230,
+        235,
+        240,
+        245,
+        250
+      ]
+    },
+    {
+      "key": "oilMax",
+      "label": "Aceite motor: máximo",
+      "type": "number",
+      "unit": "°F",
+      "default": 260,
+      "steps": [
+        200,
+        205,
+        210,
+        215,
+        220,
+        225,
+        230,
+        235,
+        240,
+        245,
+        250,
+        255,
+        260,
+        265,
+        270,
+        275,
+        280,
+        285,
+        290,
+        295,
+        300
+      ]
+    },
+    {
+      "key": "coolMin",
+      "label": "Refrigerante: mínimo (listo)",
+      "type": "number",
+      "unit": "°F",
+      "default": 175,
+      "steps": [
+        120,
+        125,
+        130,
+        135,
+        140,
+        145,
+        150,
+        155,
+        160,
+        165,
+        170,
+        175,
+        180,
+        185,
+        190,
+        195,
+        200,
+        205,
+        210,
+        215,
+        220
+      ]
+    },
+    {
+      "key": "coolMax",
+      "label": "Refrigerante: máximo",
+      "type": "number",
+      "unit": "°F",
+      "default": 230,
+      "steps": [
+        190,
+        195,
+        200,
+        205,
+        210,
+        215,
+        220,
+        225,
+        230,
+        235,
+        240,
+        245,
+        250,
+        255,
+        260
+      ]
+    },
+    {
+      "key": "gbMin",
+      "label": "Aceite caja: mínimo (listo)",
+      "type": "number",
+      "unit": "°F",
+      "default": 140,
+      "steps": [
+        80,
+        85,
+        90,
+        95,
+        100,
+        105,
+        110,
+        115,
+        120,
+        125,
+        130,
+        135,
+        140,
+        145,
+        150,
+        155,
+        160,
+        165,
+        170,
+        175,
+        180,
+        185,
+        190,
+        195,
+        200
+      ]
+    },
+    {
+      "key": "gbMax",
+      "label": "Aceite caja: máximo",
+      "type": "number",
+      "unit": "°F",
+      "default": 230,
+      "steps": [
+        180,
+        185,
+        190,
+        195,
+        200,
+        205,
+        210,
+        215,
+        220,
+        225,
+        230,
+        235,
+        240,
+        245,
+        250,
+        255,
+        260,
+        265,
+        270,
+        275,
+        280
+      ]
+    },
+    {
+      "key": "iatMin",
+      "label": "IAT: mínimo",
+      "type": "number",
+      "unit": "°F",
+      "default": 75,
+      "steps": [
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105,
+        110,
+        115,
+        120
+      ]
+    },
+    {
+      "key": "iatMax",
+      "label": "IAT: máximo",
+      "type": "number",
+      "unit": "°F",
+      "default": 120,
+      "steps": [
+        80,
+        85,
+        90,
+        95,
+        100,
+        105,
+        110,
+        115,
+        120,
+        125,
+        130,
+        135,
+        140,
+        145,
+        150,
+        155,
+        160,
+        165,
+        170,
+        175,
+        180
+      ]
+    },
+    {
+      "key": "warnPct",
+      "label": "Amarillo antes del máximo",
+      "type": "choice",
+      "default": "10",
+      "options": [
+        [
+          "5",
+          "5 %"
+        ],
+        [
+          "10",
+          "10 %"
+        ],
+        [
+          "15",
+          "15 %"
+        ],
+        [
+          "20",
+          "20 %"
+        ]
+      ]
+    },
+    {
+      "key": "theme",
+      "label": "Tema de color",
+      "type": "choice",
+      "default": "m_red",
+      "options": [
+        [
+          "m_red",
+          "M Red"
+        ],
+        [
+          "m_tricolour",
+          "M Tricolour"
+        ],
+        [
+          "ice",
+          "Ice White"
+        ],
+        [
+          "amber",
+          "Night Amber"
+        ]
+      ]
+    },
+    {
+      "key": "layout",
+      "label": "Diseño de pantalla",
+      "type": "choice",
+      "default": "full",
+      "options": [
+        [
+          "full",
+          "Pantalla completa"
+        ],
+        [
+          "standard",
+          "Estándar"
+        ]
+      ]
+    },
+    {
+      "key": "renderer",
+      "label": "Motor de dibujo",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "GPU 60 fps"
+        ],
+        [
+          "software",
+          "Software"
+        ]
+      ]
+    },
+    {
+      "key": "demo",
+      "label": "Datos de demostración",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto"
+        ],
+        [
+          "on",
+          "Siempre"
+        ],
+        [
+          "off",
+          "Nunca"
+        ]
+      ]
+    }
+  ]
+}
