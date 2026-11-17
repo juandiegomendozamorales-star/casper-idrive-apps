@@ -2,7 +2,7 @@
   "id": "jorge_essentials",
   "title": "ESSENTIALS",
   "description": "IAT, aceite de motor, aceite de caja y refrigerante en grande, con rangos propios en °F y minutos para estar listo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "vendor": "custom",
   "loggingId": "OAJ2",
   "iconGlyph": "temp",
@@ -42,7 +42,7 @@
       "buttons": [
         [
           "BTN_SETTINGS",
-          "Rangos"
+          "Ajustes"
         ]
       ]
     }
@@ -50,7 +50,7 @@
   "settings": [
     {
       "key": "oilMin",
-      "label": "Aceite motor: mínimo (listo)",
+      "label": "Aceite motor: minimo (listo)",
       "type": "number",
       "unit": "°F",
       "default": 175,
@@ -86,7 +86,7 @@
     },
     {
       "key": "oilMax",
-      "label": "Aceite motor: máximo",
+      "label": "Aceite motor: maximo",
       "type": "number",
       "unit": "°F",
       "default": 260,
@@ -116,7 +116,7 @@
     },
     {
       "key": "coolMin",
-      "label": "Refrigerante: mínimo (listo)",
+      "label": "Refrigerante: minimo (listo)",
       "type": "number",
       "unit": "°F",
       "default": 175,
@@ -146,7 +146,7 @@
     },
     {
       "key": "coolMax",
-      "label": "Refrigerante: máximo",
+      "label": "Refrigerante: maximo",
       "type": "number",
       "unit": "°F",
       "default": 230,
@@ -170,7 +170,7 @@
     },
     {
       "key": "gbMin",
-      "label": "Aceite caja: mínimo (listo)",
+      "label": "Aceite caja: minimo (listo)",
       "type": "number",
       "unit": "°F",
       "default": 140,
@@ -204,7 +204,7 @@
     },
     {
       "key": "gbMax",
-      "label": "Aceite caja: máximo",
+      "label": "Aceite caja: maximo",
       "type": "number",
       "unit": "°F",
       "default": 230,
@@ -234,7 +234,7 @@
     },
     {
       "key": "iatMin",
-      "label": "IAT: mínimo",
+      "label": "IAT: minimo",
       "type": "number",
       "unit": "°F",
       "default": 75,
@@ -260,7 +260,7 @@
     },
     {
       "key": "iatMax",
-      "label": "IAT: máximo",
+      "label": "IAT: maximo",
       "type": "number",
       "unit": "°F",
       "default": 120,
@@ -290,7 +290,7 @@
     },
     {
       "key": "warnPct",
-      "label": "Amarillo antes del máximo",
+      "label": "Amarillo antes del maximo",
       "type": "choice",
       "default": "10",
       "options": [
@@ -370,7 +370,7 @@
     },
     {
       "key": "demo",
-      "label": "Datos de demostración",
+      "label": "Datos de demostracion",
       "type": "choice",
       "default": "auto",
       "options": [

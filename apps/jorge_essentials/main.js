@@ -135,18 +135,64 @@ mgu.run({
             cv.text(j.text, bx, y + h - 30, ts, col, { font: 'bold', spacing: 1.5 });
         }
 
+        /* ---------- RANGOS: min and max of each value, with - and + ---------- */
+        const TABS = ['ESSENTIALS', 'RANGOS'];
+        let page = 0;
+        function step(key, dir) {
+            const it = settings.item(key), steps = (it && it.steps) || [];
+            const cur = settings.get(key);
+            let i = steps.indexOf(cur);
+            if (i < 0) i = steps.findIndex((x) => x >= cur);
+            const n = steps[G.clamp(i + dir, 0, steps.length - 1)];
+            if (n !== undefined) settings.set(key, n);
+            return render();
+        }
+        function stepper(cv, t, x, cy, label, key) {
+            const bh = 64;
+            cv.text(label, x, cy + 10, 22, t.dim, { font: 'bold', spacing: 2 });
+            G.button(cv, t, x + 70, cy - bh / 2, bh, bh, '-', () => step(key, -1), { key: key + '-' });
+            cv.text(String(settings.get(key)), x + 70 + bh + 75, cy + 18, 52, '#ffffff', { font: 'num', align: 'center' });
+            cv.text('°F', x + 70 + bh + 130, cy + 18, 24, t.dim, { font: 'num' });
+            G.button(cv, t, x + 70 + bh + 175, cy - bh / 2, bh, bh, '+', () => step(key, 1), { key: key + '+' });
+        }
+        function renderRanges(cv, t) {
+            const top = G.TOP + 6, bottom = G.pageBottom(cv) - 4, gap = 10;
+            const rh = (bottom - top - 3 * gap) / 4;
+            const pct = Number(settings.get('warnPct')) || 10;
+            VALUES.forEach((def, i) => {
+                const y = top + i * (rh + gap), cy = y + rh / 2;
+                cv.roundRect(16, y, W - 32, rh, 12, withAlpha('#18202b', 0.9));
+                cv.strokeRoundRect(16, y, W - 32, rh, 12, 2, withAlpha('#2a3442', 1));
+                cv.text(def.label, 40, cy - 2, 30, '#ffffff', { font: 'bold', spacing: 2 });
+                cv.text(def.cold ? 'bajo el minimo: rojo (frio)' : 'bajo el minimo: verde', 40, cy + 30, 18, t.dim);
+                stepper(cv, t, 420, cy, 'MIN', def.min);
+                stepper(cv, t, 820, cy, 'MAX', def.max);
+                // the colours across the range
+                const sx = 1230, sw = 330, sh = 16, sy = cy - sh / 2, parts = [[def.cold ? RED : GREEN, 1], [GREEN, 3], [AMBER, 3 * pct / 100 * 2.5], [RED, 1]];
+                const tot = parts.reduce((a, p) => a + p[1], 0);
+                let px = sx;
+                parts.forEach(([c, f]) => { const pw = sw * f / tot; cv.fillRect(px, sy, pw, sh, c); px += pw; });
+            });
+        }
+
         function render() {
             const t = ctx.theme(), d = car.data(), now = Date.now();
             const cv = ctx.canvas(W, H).clear('#05070a');
             const v = values(d);
             track(v);
+            if (page === 1) {
+                renderRanges(cv, t);
+                G.frame(cv, t, TABS, 1, [d.demo && { text: 'DEMO' }]);
+                return ui.image('MAIN_GFX', cv);
+            }
             const top = G.TOP + 6, bottom = G.pageBottom(cv) - 4, gap = 14;
             const w = (W - 2 * 16 - 3 * gap) / 4;
             VALUES.forEach((def, i) => tile(cv, t, 16 + i * (w + gap), top, w, bottom - top, def, v[def.key], judge(def, v[def.key], d), now));
-            G.frame(cv, t, ['ESSENTIALS'], 0, [d.demo && { text: 'DEMO' }]);
+            G.frame(cv, t, TABS, 0, [d.demo && { text: 'DEMO' }]);
             return ui.image('MAIN_GFX', cv);
         }
 
+        if (ctx.onTab) ctx.onTab((i) => { page = i; return render(); });
         // every screen refresh with the GPU renderer; 4 fps in software
         ctx.loop('MAIN', 4, render);
         render().then(() => log.info('first frame done')).catch((e) => log.warn('first render: ' + e));
