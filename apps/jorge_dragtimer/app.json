@@ -1,0 +1,217 @@
+{
+  "id": "jorge_dragtimer",
+  "title": "Cronómetro M340i",
+  "description": "0-100, 100-200 y 1/4 de milla con récords (basado en Drag Timer de idrive7-apps, MIT)",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAJ1",
+  "iconGlyph": "flag",
+  "mguHmi": [
+    "ID8"
+  ],
+  "requires": {
+    "idrive7-renderd": "2.1.18",
+    "mgu-inputgate": "1.1.0"
+  },
+  "signals": {
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infotainment.vehicle.CDS2": {
+      "statusLongitudinalAccelerationMassCenter": "rs"
+    },
+    "de.bmw.infotainment.vehicle.CDS": {
+      "statusEngineSpeed2": "rs"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "Cronómetro",
+      "buttons": [
+        [
+          "BTN_ACTION",
+          "Reiniciar"
+        ],
+        [
+          "BTN_PAGE",
+          "Siguiente"
+        ],
+        [
+          "BTN_PREV",
+          "Anterior"
+        ],
+        [
+          "BTN_SETTINGS",
+          "Ajustes"
+        ]
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "key": "speedUnit",
+      "label": "Unidad de velocidad",
+      "type": "choice",
+      "default": "kmh",
+      "options": [
+        [
+          "kmh",
+          "km/h"
+        ],
+        [
+          "mph",
+          "mph"
+        ]
+      ]
+    },
+    {
+      "key": "distance",
+      "label": "Distancia",
+      "type": "choice",
+      "default": "qm",
+      "options": [
+        [
+          "qm",
+          "1/4 mile"
+        ],
+        [
+          "em",
+          "1/8 mile"
+        ],
+        [
+          "m1000",
+          "1000 m"
+        ]
+      ]
+    },
+    {
+      "key": "rollout",
+      "label": "Rollout de un pie",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "advanced",
+      "label": "Ajustes avanzados",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "theme",
+      "label": "Tema de color",
+      "type": "choice",
+      "default": "m_tricolour",
+      "options": [
+        [
+          "m_red",
+          "M Red"
+        ],
+        [
+          "m_tricolour",
+          "M Tricolour"
+        ],
+        [
+          "ice",
+          "Ice White"
+        ],
+        [
+          "amber",
+          "Night Amber"
+        ]
+      ]
+    },
+    {
+      "key": "speedRate",
+      "label": "Refresco de velocidad",
+      "type": "number",
+      "unit": "fps",
+      "default": 10,
+      "reset": 1,
+      "markDefault": true,
+      "steps": [
+        5,
+        10,
+        15,
+        30,
+        60
+      ],
+      "when": {
+        "advanced": true
+      }
+    },
+    {
+      "key": "layout",
+      "label": "Diseño de pantalla",
+      "type": "choice",
+      "default": "full",
+      "options": [
+        [
+          "full",
+          "Full screen"
+        ],
+        [
+          "standard",
+          "Standard"
+        ]
+      ]
+    },
+    {
+      "key": "renderer",
+      "label": "Motor de dibujo",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "GPU 60 fps (default)"
+        ],
+        [
+          "software",
+          "Software"
+        ]
+      ]
+    },
+    {
+      "key": "demo",
+      "label": "Datos de demostración",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto"
+        ],
+        [
+          "on",
+          "Always"
+        ],
+        [
+          "off",
+          "Never"
+        ]
+      ]
+    }
+  ],
+  "config": {
+    "comment": "BMW's own scalings (M Laptimer TypeConverters)",
+    "scaling": {
+      "speed": {
+        "factor": 0.015625,
+        "offset": 0,
+        "invalid": 65535
+      },
+      "accel": {
+        "factor": 0.002,
+        "offset": -65,
+        "invalid": 65535
+      },
+      "rpm": {
+        "factor": 0.25,
+        "offset": 0,
+        "invalid": 65535
+      }
+    }
+  }
+}
