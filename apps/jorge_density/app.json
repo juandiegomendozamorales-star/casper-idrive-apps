@@ -1,0 +1,203 @@
+{
+  "id": "jorge_density",
+  "title": "DENSITY ALTITUD",
+  "description": "Density altitude en metros, presion, temperatura afuera e IAT, y tu tiempo de 1/4 de milla corregido al nivel del mar",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAJ3",
+  "iconGlyph": "ambient",
+  "mguHmi": [
+    "ID8"
+  ],
+  "requires": {
+    "idrive7-renderd": "2.1.15"
+  },
+  "signals": {
+    "de.bmw.infotainment.vehicle.CDS": {
+      "statusEngineSpeed2": "rs"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infrastructure.EnvironmentalInformation": {
+      "ExteriorTemperature": "s",
+      "UnitBN2020": "rs"
+    },
+    "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {
+      "_instances": "SystemFunctionsInternalTasuInst1",
+      "_methods": [
+        "sendTasuRequest"
+      ],
+      "_broadcasts": [
+        "sendTasuResponse"
+      ]
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "DENSITY ALTITUD",
+      "buttons": [
+        [
+          "BTN_SETTINGS",
+          "Ajustes"
+        ]
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "key": "humidity",
+      "label": "Humedad",
+      "type": "number",
+      "unit": "%",
+      "default": 60,
+      "steps": [
+        0,
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100
+      ],
+      "hidden": true
+    },
+    {
+      "key": "turbo",
+      "label": "Correccion para turbo",
+      "type": "number",
+      "unit": "%",
+      "default": 40,
+      "steps": [
+        0,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100
+      ],
+      "hidden": true
+    },
+    {
+      "key": "daLimit",
+      "label": "DA: verde por debajo de",
+      "type": "number",
+      "unit": "m",
+      "default": 3050,
+      "hidden": true
+    },
+    {
+      "key": "et",
+      "label": "Tiempo 1/4",
+      "type": "number",
+      "unit": "s",
+      "default": 12.45,
+      "hidden": true
+    },
+    {
+      "key": "trap",
+      "label": "Trap speed",
+      "type": "number",
+      "unit": "mph",
+      "default": 112,
+      "hidden": true
+    },
+    {
+      "key": "theme",
+      "label": "Tema de color",
+      "type": "choice",
+      "default": "m_red",
+      "options": [
+        [
+          "m_red",
+          "M Red"
+        ],
+        [
+          "m_tricolour",
+          "M Tricolour"
+        ],
+        [
+          "ice",
+          "Ice White"
+        ],
+        [
+          "amber",
+          "Night Amber"
+        ]
+      ]
+    },
+    {
+      "key": "layout",
+      "label": "Diseno de pantalla",
+      "type": "choice",
+      "default": "full",
+      "options": [
+        [
+          "full",
+          "Pantalla completa"
+        ],
+        [
+          "standard",
+          "Estandar"
+        ]
+      ]
+    },
+    {
+      "key": "renderer",
+      "label": "Motor de dibujo",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "GPU 60 fps"
+        ],
+        [
+          "software",
+          "Software"
+        ]
+      ]
+    },
+    {
+      "key": "demo",
+      "label": "Datos de demostracion",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto"
+        ],
+        [
+          "on",
+          "Siempre"
+        ],
+        [
+          "off",
+          "Nunca"
+        ]
+      ]
+    }
+  ]
+}
