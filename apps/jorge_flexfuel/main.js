@@ -2,7 +2,7 @@
 /**
  * FLEX FUEL (Perea Performance) - what is in the tank, and how much ethanol to add.
  *
- *   TANQUE        ethanol % (MHD flex fuel sensor, through the engine unit) and fuel in the tank in gallons
+ *   TANQUE        ethanol % (MHD flex fuel sensor, read the way perea_mhd_flex does: sensors.js) and fuel in gallons
  *   CALCULADORA   target E% with - and +: gallons of ethanol to add (ethanol only, never gasoline):
  *                   x = G * (T - C) / (P - T)
  *                 G gallons in the tank, C its ethanol %, T the target %, P the purity of the ethanol bought
@@ -29,7 +29,7 @@ mgu.run({
     async start(ctx) {
         const { ui, settings, log } = ctx;
         const car = new Car(ctx, ['rpm', 'speed']);
-        const sensors = new Sensors(ctx, log, () => ui.isVisible('MAIN')).start();
+        const sensors = new Sensors(ctx, log).start();
 
         /** Ethanol % and gallons in the tank (null when the car has not said). */
         function tankNow(d) {
@@ -167,6 +167,7 @@ mgu.run({
         let page = 0, ctxTheme = null;
         function render() {
             const t = ctxTheme = ctx.theme(), d = car.data();
+            sensors.tick(ui.isVisible('MAIN'), !!d.demo);
             const cv = ctx.canvas(W, H).clear(BG);
             const top = G.TOP + 6, bottom = G.pageBottom(cv) - 4;
             watermark(cv, top + 20, bottom - 50);
@@ -178,6 +179,7 @@ mgu.run({
             return ui.image('MAIN_GFX', cv);
         }
 
+        if (ui.onVisible) ui.onVisible((name, on) => { if (name === 'MAIN') sensors.tick(on); });
         if (ctx.onTab) ctx.onTab((i) => { page = i; return render(); });
         ctx.loop('MAIN', 4, render);
         render().then(() => log.info('first frame done')).catch((e) => log.warn('first render: ' + e));

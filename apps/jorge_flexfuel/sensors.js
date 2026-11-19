@@ -1,96 +1,78 @@
 'use strict';
 /**
- * sensors.js - FLEX FUEL: read ONLY from the engine unit (DME, 0x12; kit/readonly-diag refuses anything
- * that is not a read):
+ * sensors.js - FLEX FUEL: the ethanol % and the fuel in the tank, from the engine unit (DME, 0x12).
  *
- *   ethanol   22 550D  (PROZENT_ALK_KRST, % alcohol in the fuel, raw x 0.392), else OBD 01 52 (raw x 100/255)
- *             - with MHD's flex fuel kit the tune feeds its sensor's reading into this value
- *   fuel      22 5949 + 22 594A  (left + right half of the tank, raw x 0.5 l), else OBD 01 2F (% of the tank)
+ * The same way as Alex Perea's perea_mhd_flex (poller.js / protocol.js, MIT, copied unchanged), which
+ * is how MHD's own app logs it: on an MHD-flashed DME it asks for the ROM (22 F1 01 / F1 02), lets the
+ * DME put MHD's two ethanol bytes, "Active" (what the tune uses) and "CAN" (what the flex fuel sensor
+ * reads), under a temporary identifier of its own (2C, F303; the DME forgets it at the next ignition)
+ * and reads that twice a second (22 F3 03). Nothing is stored in the car. Between those reads it also
+ * reads the two tank halves (22 5949 / 594A, 0.5 l each) and the DME's own alcohol % (22 550D).
  *
- * Asked only while the screen shows (visible()).
- *
- *   const s = new Sensors(ctx, log, () => visible).start();
- *   s.ethanol()  -> %          s.litres()  -> l (both halves)     s.fuelPct() -> % (fallback)
+ *   const s = new Sensors(ctx, log).start();
+ *   s.tick(visible, demo)       every frame: sends only while the screen shows and not in demo
+ *   s.ethanol()  -> %   (sensor, else what the tune uses, else the DME's own %)     s.litres() -> l
+ *   s.ethWhy()   -> a short line for AJUSTES: where the ethanol comes from, or why there is none
  */
-const { ReadOnlyDiag } = require('./kit/readonly-diag');
-const { DidReader } = require('./kit/dids');
+const { Diag } = require('./kit/diag');
+const { Poller } = require('./poller');
+const { DME, PROFILES } = require('./protocol');
 
-const DME = 0x12;
-const ETHANOL = [
-    { did: '550D', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
-    { obd: '52', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
-];
-const LEFT = [{ did: '5949', bytes: 1, at: 0, factor: 0.5, offset: 0, min: 0, max: 100 }];
-const RIGHT = [{ did: '594A', bytes: 1, at: 0, factor: 0.5, offset: 0, min: 0, max: 100 }];
-const PCT = [{ obd: '2F', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 }];
-const EVERY = 3000, SLOW_MS = 30000, FRESH_MS = 30000;
+const WHY = {
+    'no-link': 'SIN CONEXION', 'link-down': 'CARRO DORMIDO', probing: 'BUSCANDO MHD', 'no-mhd': 'MHD NO ENCONTRADO',
+    identifying: 'LEYENDO VERSION', 'unsupported-rom': 'VERSION NO CONOCIDA', defining: 'PREPARANDO', reading: 'LEYENDO',
+    error: 'ESPERANDO AL MOTOR',
+};
 
 class Sensors {
-    constructor(ctx, log, visible) {
-        this.ctx = ctx; this.log = log; this.visible = visible || (() => true);
-        this.v = {}; this.at = {}; this.next = {}; this.miss = {}; this.logged = {};
-    }
+    constructor(ctx, log) { this.ctx = ctx; this.log = log; this.poller = null; this.diag = null; }
 
     start() {
-        this.link = new ReadOnlyDiag(this.ctx.signals, this.log);
-        this.rd = new DidReader(this.link, { ecu: DME });
-        this.link.init().then(() => {
-            if (this.link.ready === false) { this.log.info('no diagnostic link'); return; }
-            this._loop();
+        const diag = this.diag = new Diag(this.ctx.signals, this.log);
+        diag.quiet = true;
+        diag.init().then(() => {
+            this.poller = new Poller({
+                physical: (sid, data, ms, accept) => diag.physical(DME, sid, data, ms, accept),
+                available: () => !!diag.available, hasLink: () => !!diag.p,
+                log: this.log, profiles: PROFILES,
+            });
+            diag.on('available', (on) => this.poller.linkChanged(on));
+            this.poller.setVisible(false);
+            this.poller.start();
         }).catch((e) => this.log.warn('diagnostic link: ' + (e && e.message || e)));
         return this;
     }
 
-    _get(k) { return Date.now() - (this.at[k] || 0) < FRESH_MS ? this.v[k] : null; }
-    ethanol() { return this._get('eth'); }
-    litres() { const l = this._get('left'), r = this._get('right'); return l !== null && l !== undefined && r !== null && r !== undefined ? l + r : null; }
-    fuelPct() { return this._get('pct'); }
-    /** Why the ethanol reads failed, short, for the AJUSTES page: '550D NRC 31 · OBD 52 sin respuesta'. */
+    tick(visible, demo) {
+        if (!this.poller) return;
+        if (this.poller.visible !== !!visible) this.poller.setVisible(visible);
+        if (demo !== undefined && this.poller.paused !== !!demo) this.poller.setPaused(demo);
+    }
+
+    _view() { return this.poller ? this.poller.view() : null; }
+
+    ethanol() {
+        const v = this._view();
+        if (!v) return null;
+        if (v.can != null && !v.stale) return v.can;
+        if (v.active != null && !v.stale) return v.active;
+        const d = v.fuel.dmeEthanol;
+        return d.fresh ? d.value : null;
+    }
+
+    litres() { const v = this._view(); return v ? v.fuel.dme : null; }
+    fuelPct() { return null; }
+
     ethWhy() {
-        if (!this.rd) return 'SIN CONEXION';
-        return ETHANOL.map((c) => {
-            const lb = DidReader.label(c), r = this.rd.raws[this.rd.key(c)];
-            if (!r) return lb + ' ...';
-            if (r.ok) return lb + ' OK';
-            const why = /^NRC/.test(r.why) ? r.why.split(' ').slice(0, 2).join(' ') : r.why === 'out of range' ? 'FUERA ' + r.bytes : r.why === 'no reply' ? 'SIN RESPUESTA' : r.why.slice(0, 18);
-            return lb + ' ' + why;
-        }).join('  /  ').toUpperCase();
+        const v = this._view();
+        if (!v) return 'SIN CONEXION';
+        let s = WHY[v.state] || String(v.state).toUpperCase();
+        if (v.state === 'reading') s += v.can != null ? ' SENSOR MHD' : v.active != null ? ' MHD ACTIVO' : '';
+        else if (v.fuel.dmeEthanol.fresh) s += '  /  550D ' + Math.round(v.fuel.dmeEthanol.value) + '%';
+        if (v.state === 'unsupported-rom' && v.seen.length) s += '  ' + v.seen.slice(0, 2).join(' ');
+        if (v.state === 'no-mhd' || v.state === 'error') s += '  ' + String(v.reason || '').slice(0, 28);
+        return s.toUpperCase();
     }
-
-    async _loop() {
-        for (;;) {
-            try {
-                if (this.visible()) {
-                    await this._read('eth', ETHANOL);
-                    await this._read('left', LEFT);
-                    await this._read('right', RIGHT);
-                    if (this.litres() === null) await this._read('pct', PCT);
-                }
-            } catch (e) {
-                // the head unit's transport comes up a few seconds after the app: try again soon
-                this._once('err', 'read: ' + (e && e.message || e) + ' (trying again)');
-            }
-            await new Promise((r) => setTimeout(r, 250));
-        }
-    }
-
-    async _read(key, list) {
-        if ((this.next[key] || 0) > Date.now()) return;
-        if (this.link.wake) this.link.wake(DME);
-        const v = await this.rd.value(key, list);
-        const now = Date.now();
-        if (v !== null) {
-            this.v[key] = v; this.at[key] = now; this.miss[key] = 0;
-            this._once(key + 'ok', key + ' -> ' + v);
-            this.next[key] = now + EVERY;
-        } else {
-            this.miss[key] = (this.miss[key] || 0) + 1;
-            this._once(key + 'none', key + ': no answer (' + JSON.stringify(this.rd.raws) + ')');
-            this.next[key] = now + (this.miss[key] >= 3 ? SLOW_MS : EVERY);
-        }
-    }
-
-    _once(k, msg) { if (!this.logged[k]) { this.logged[k] = true; this.log.info(msg); } }
 }
 
 module.exports = { Sensors };
