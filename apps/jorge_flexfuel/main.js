@@ -76,16 +76,17 @@ mgu.run({
 
         /* ---------- TANQUE ---------- */
         function gauge(cv, x, top, w, h, label, frac, big, unit, c0, c1, ends, foot) {
-            const cx = x + w / 2, cy = top + 215, r1 = 150, r0 = 120;
+            const r1 = G.clamp((h - 170) / 1.5, 150, 215), r0 = r1 * 0.8, z = r1 / 150;
+            const cx = x + w / 2 + (x < W / 2 ? -40 : 40), cy = top + 66 + r1;
             card(cv, x, top, w, h);
             title(cv, cx, top, label);
             cv.arc(cx, cy, r0, r1, -120, 120, withAlpha('#141c28', 0.9));
             if (G.isNum(frac) && frac > 0.005) cv.arc(cx, cy, r0, r1, -120, -120 + 240 * G.clamp(frac, 0, 1), c0, { ramp: [c0, c1], rampFrom: -120, rampTo: 120 });
-            value(cv, cx, cy + 40, big, 112, WHITE);
-            cv.text(unit, cx, cy + 88, 20, c1, { font: 'bold', align: 'center', spacing: 5 });
-            const ex = r1 * 0.866 - 15, ey = cy + r1 * 0.5 + 32;
-            cv.text(ends[0], cx - ex, ey, 17, FAINT, { font: 'bold', align: 'center' });
-            cv.text(ends[1], cx + ex, ey, 17, FAINT, { font: 'bold', align: 'center' });
+            value(cv, cx, cy + 55 * z, big, 112 * z, WHITE);
+            cv.text(unit, cx, cy - 62 * z, 20 * Math.min(z, 1.3), c1, { font: 'bold', align: 'center', spacing: 5 });
+            const ex = r1 * 0.866 - 15, ey = cy + r1 * 0.5 + 34;
+            cv.text(ends[0], cx - ex, ey, 19, FAINT, { font: 'bold', align: 'center' });
+            cv.text(ends[1], cx + ex, ey, 19, FAINT, { font: 'bold', align: 'center' });
             // the line at the bottom: label in grey, figure in blue
             const lw = cv.textWidth(foot[0] + ' ', 22, { font: 'bold', spacing: 1 }), fw = cv.textWidth(foot[1], 22, { font: 'bold', spacing: 1 });
             const fx = cx - (lw + fw) / 2;
