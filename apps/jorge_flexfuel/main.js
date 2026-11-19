@@ -52,9 +52,7 @@ mgu.run({
         }
 
         /* ---------- shared drawing ---------- */
-        function card(cv, x, y, w, h, edge) {
-                        cv.strokeRoundRect(x, y, w, h, 16, 2, edge || withAlpha(WHITE, 0.08));
-        }
+        function card() {}      // no boxes: each half stands on the logo by itself
         function title(cv, cx, y, s, col) { cv.text(s, cx, y + 44, 26, col || DIM, { font: 'bold', align: 'center', spacing: 4 }); }
         /** A number and its unit, centred on cx as one; the E of an E-number in the bold font. */
         function value(cv, cx, base, s, size, col, unit, usize) {
