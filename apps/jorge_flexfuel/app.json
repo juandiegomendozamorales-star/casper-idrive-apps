@@ -1,0 +1,146 @@
+{
+  "id": "jorge_flexfuel",
+  "title": "FLEX FUEL",
+  "description": "Etanol del sensor flex fuel, gasolina en el tanque en galones y calculadora de cuanto etanol agregar",
+  "version": "0.1.0",
+  "vendor": "Perea Performance",
+  "loggingId": "OAJ4",
+  "mguHmi": [
+    "ID8"
+  ],
+  "requires": {
+    "idrive7-renderd": "2.1.15"
+  },
+  "signals": {
+    "de.bmw.infotainment.vehicle.CDS": {
+      "statusEngineSpeed2": "rs"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {
+      "_instances": "SystemFunctionsInternalTasuInst1",
+      "_methods": [
+        "sendTasuRequest"
+      ],
+      "_broadcasts": [
+        "sendTasuResponse"
+      ]
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "FLEX FUEL",
+      "buttons": [
+        [
+          "BTN_SETTINGS",
+          "Ajustes"
+        ]
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "key": "target",
+      "label": "Objetivo",
+      "type": "number",
+      "unit": "%",
+      "default": 50,
+      "hidden": true
+    },
+    {
+      "key": "purity",
+      "label": "Pureza del etanol",
+      "type": "number",
+      "unit": "%",
+      "default": 98,
+      "hidden": true
+    },
+    {
+      "key": "tank",
+      "label": "Tamano del tanque",
+      "type": "number",
+      "unit": "gal",
+      "default": 15.6,
+      "hidden": true
+    },
+    {
+      "key": "theme",
+      "label": "Tema de color",
+      "type": "choice",
+      "default": "m_red",
+      "options": [
+        [
+          "m_red",
+          "M Red"
+        ],
+        [
+          "m_tricolour",
+          "M Tricolour"
+        ],
+        [
+          "ice",
+          "Ice White"
+        ],
+        [
+          "amber",
+          "Night Amber"
+        ]
+      ]
+    },
+    {
+      "key": "layout",
+      "label": "Diseno de pantalla",
+      "type": "choice",
+      "default": "full",
+      "options": [
+        [
+          "full",
+          "Pantalla completa"
+        ],
+        [
+          "standard",
+          "Estandar"
+        ]
+      ]
+    },
+    {
+      "key": "renderer",
+      "label": "Motor de dibujo",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "GPU 60 fps"
+        ],
+        [
+          "software",
+          "Software"
+        ]
+      ]
+    },
+    {
+      "key": "demo",
+      "label": "Datos de demostracion",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto"
+        ],
+        [
+          "on",
+          "Siempre"
+        ],
+        [
+          "off",
+          "Nunca"
+        ]
+      ]
+    }
+  ]
+}

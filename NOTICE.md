@@ -9,3 +9,7 @@ Este repositorio no contiene archivos de BMW: el carro arma cada app con su prop
 Las herramientas `tools/idrive7-renderd` (GPU renderer, mgu-render de Robert Nisipeanu e IterioDev) y
 `tools/mgu-inputgate` (Controller gate) son copias sin cambios de `kit/renderd/prebuilt` y
 `kit/renderd/inputgate/tool` del mismo proyecto, con sus licencias incluidas en cada carpeta.
+
+## Logo de Perea Performance
+
+`apps/jorge_flexfuel/logo.js` y su `icon.png` vienen del logo de Perea Performance que entregó el dueño del proyecto. No están cubiertos por la licencia MIT del kit.
