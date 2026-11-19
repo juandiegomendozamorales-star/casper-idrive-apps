@@ -6,7 +6,8 @@
  *   CALCULADORA   target E% with - and +: gallons of ethanol to add (ethanol only, never gasoline):
  *                   x = G * (T - C) / (P - T)
  *                 G gallons in the tank, C its ethanol %, T the target %, P the purity of the ethanol bought
- *   AJUSTES       purity of the ethanol, size of the tank
+ *   AJUSTES       purity of the ethanol, size of the tank, and the ethanol % to use when the sensor gives nothing
+ *                 (typed in from the MHD app); under it, why the engine unit did not answer
  *
  * The logo (logo.js, Jorge's own) is the background of every page, at 30 %.
  */
@@ -35,7 +36,9 @@ mgu.run({
             if (d.demo) return { eth: 38, gal: 6.0 };
             const l = sensors.litres(), pct = sensors.fuelPct(), tank = Number(settings.get('tank')) || 15.6;
             const gal = l !== null ? l / L_PER_GAL : G.isNum(pct) ? pct / 100 * tank : null;
-            return { eth: sensors.ethanol(), gal };
+            const e = sensors.ethanol();
+            if (G.isNum(e)) return { eth: e, gal };
+            return { eth: Number(settings.get('ethManual')), gal, manual: true };
         }
 
         /* ---------- the logo in the background: recorded once as a layer ---------- */
@@ -96,7 +99,7 @@ mgu.run({
         function renderTank(cv, top, bottom, n) {
             const gap = 20, w = (W - 32 - gap) / 2, h = bottom - top, tank = Number(settings.get('tank')) || 15.6;
             const alcohol = G.isNum(n.eth) && G.isNum(n.gal) ? (n.gal * n.eth / 100).toFixed(1) + ' gal' : '--';
-            gauge(cv, 16, top, w, h, 'ETANOL', G.isNum(n.eth) ? n.eth / 100 : null, eNum(n.eth), '% ETANOL', BLUE0, BLUE1,
+            gauge(cv, 16, top, w, h, 'ETANOL', G.isNum(n.eth) ? n.eth / 100 : null, eNum(n.eth), n.manual ? 'MANUAL' : '% ETANOL', BLUE0, BLUE1,
                 ['E0', 'E100'], ['MEZCLA ACTUAL', eNum(n.eth)]);
             gauge(cv, 16 + w + gap, top, w, h, 'GASOLINA', G.isNum(n.gal) ? n.gal / tank : null, gal(n.gal), 'GALONES', ORANGE0, ORANGE1,
                 ['VACIO', 'LLENO'], ['ALCOHOL ADENTRO', alcohol]);
@@ -145,14 +148,16 @@ mgu.run({
         const SET = [
             { key: 'purity', label: 'PUREZA DEL ETANOL', unit: '%', by: 1, lo: 50, hi: 100, dec: 0, fmt: (v) => String(Math.round(v)) },
             { key: 'tank', label: 'TAMANO DEL TANQUE', unit: 'gal', by: 0.1, lo: 8, hi: 30, dec: 1, fmt: (v) => Number(v).toFixed(1) },
+            { key: 'ethManual', label: 'ETANOL MANUAL', unit: '', by: 1, lo: 0, hi: 100, dec: 0, fmt: (v) => 'E' + Math.round(v) },
         ];
         function renderSet(cv, top, bottom) {
-            const gap = 20, w = (W - 32 - gap) / 2, h = bottom - top;
+            const gap = 20, w = (W - 32 - gap * 2) / 3, h = bottom - top;
             SET.forEach((s, i) => {
                 const x = 16 + i * (w + gap), cx = x + w / 2, b = 80;
                 card(cv, x, top, w, h);
                 title(cv, cx, top, s.label, WHITE);
-                value(cv, cx, top + 230, s.fmt(settings.get(s.key)), 120, WHITE, s.unit, 34);
+                value(cv, cx, top + 230, s.fmt(settings.get(s.key)), 110, WHITE, s.unit, 30);
+                if (s.key === 'ethManual') cv.text(sensors.ethWhy(), cx, top + 290, 18, FAINT, { font: 'bold', align: 'center' });
                 G.button(cv, ctxTheme, cx - 110 - b / 2, top + h - b - 30, b, b, '-', () => nudge(s.key, -s.by, s.lo, s.hi, s.dec), { key: s.key + '-' });
                 G.button(cv, ctxTheme, cx + 110 - b / 2, top + h - b - 30, b, b, '+', () => nudge(s.key, s.by, s.lo, s.hi, s.dec), { key: s.key + '+' });
             });

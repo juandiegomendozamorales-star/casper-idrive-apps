@@ -2,7 +2,7 @@
   "id": "jorge_flexfuel",
   "title": "FLEX FUEL",
   "description": "Etanol del sensor flex fuel, gasolina en el tanque en galones y calculadora de cuanto etanol agregar",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "vendor": "Perea Performance",
   "loggingId": "OAJ4",
   "mguHmi": [
@@ -64,6 +64,14 @@
       "type": "number",
       "unit": "gal",
       "default": 15.6,
+      "hidden": true
+    },
+    {
+      "key": "ethManual",
+      "label": "Etanol manual",
+      "type": "number",
+      "unit": "%",
+      "default": 30,
       "hidden": true
     },
     {

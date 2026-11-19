@@ -45,6 +45,17 @@ class Sensors {
     ethanol() { return this._get('eth'); }
     litres() { const l = this._get('left'), r = this._get('right'); return l !== null && l !== undefined && r !== null && r !== undefined ? l + r : null; }
     fuelPct() { return this._get('pct'); }
+    /** Why the ethanol reads failed, short, for the AJUSTES page: '550D NRC 31 · OBD 52 sin respuesta'. */
+    ethWhy() {
+        if (!this.rd) return 'SIN CONEXION';
+        return ETHANOL.map((c) => {
+            const lb = DidReader.label(c), r = this.rd.raws[this.rd.key(c)];
+            if (!r) return lb + ' ...';
+            if (r.ok) return lb + ' OK';
+            const why = /^NRC/.test(r.why) ? r.why.split(' ').slice(0, 2).join(' ') : r.why === 'out of range' ? 'FUERA ' + r.bytes : r.why === 'no reply' ? 'SIN RESPUESTA' : r.why.slice(0, 18);
+            return lb + ' ' + why;
+        }).join('  /  ').toUpperCase();
+    }
 
     async _loop() {
         for (;;) {
