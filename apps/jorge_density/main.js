@@ -213,9 +213,26 @@ mgu.run({
             });
         }
 
+        /* ---------- iDrive 7 ---------- */
+        // its own layout of the same three pages (id7.js); on iDrive 8 the ones above, as they are
+        const v7 = !ui.id8 && require('./id7').create({
+            settings, air, thousands, F, card, bigNum, nudge, CAL, SCALE_M, colors: { GREEN, AMBER, BLUE, WHITE },
+        });
+        function render7() {
+            const t = ctx.theme(), d = car.data();
+            const cv = ctx.canvas(W, H).clear('#05070a');
+            const r = readings(d);
+            if (page === 1) v7.times(cv, t, d, r);
+            else if (page === 2) v7.cal(cv, t);
+            else v7.air(cv, t, d, r);
+            G.frame(cv, t, TABS, page, [d.demo && { text: 'DEMO' }]);
+            return ui.image('MAIN_GFX', cv);
+        }
+
         const TABS = ['AIRE', 'TIEMPOS', 'CALIBRAR'];
         let page = 0;
         function render() {
+            if (v7) return render7();
             const t = ctx.theme(), d = car.data();
             const cv = ctx.canvas(W, H).clear('#05070a');
             const r = readings(d);

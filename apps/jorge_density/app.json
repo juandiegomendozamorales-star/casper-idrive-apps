@@ -2,7 +2,7 @@
   "id": "jorge_density",
   "title": "DENSITY ALTITUD",
   "description": "Density altitude en metros, presion, temperatura afuera e IAT, y tu tiempo de 1/4 de milla corregido al nivel del mar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "vendor": "custom",
   "loggingId": "OAJ3",
   "iconGlyph": "ambient",

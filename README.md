@@ -6,7 +6,7 @@ Apps propias para el iDrive 8 (MGU), instaladas desde la [MGU Store](https://git
 
 - **FLEX FUEL** (`jorge_flexfuel`, Perea Performance): etanol del sensor flex fuel, gasolina en galones y calculadora de cuánto etanol agregar.
 
-- **DENSITY ALTITUD** (`jorge_density`): density altitude en metros, presión, temperatura afuera e IAT, y el tiempo de 1/4 de milla corregido al nivel del mar.
+- **DENSITY ALTITUD** (`jorge_density`): density altitude en metros, presión, temperatura afuera e IAT, y el tiempo de 1/4 de milla corregido al nivel del mar. También para iDrive 7, con su propia vista para esa pantalla (1920 × 720).
 
 - **ESSENTIALS** (`jorge_essentials`): IAT, aceite de motor, aceite de caja y refrigerante en grande, rangos propios en °F y minutos para estar listo.
 
