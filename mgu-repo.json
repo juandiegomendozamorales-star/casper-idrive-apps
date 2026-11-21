@@ -4,9 +4,6 @@
     "path": "apps/*",
     "manifest": "app.json",
     "icon": "icon.png",
-    "mguHmi": [
-      "ID8"
-    ],
     "build": {
       "python": "kit/tools/build.py",
       "args": [
