@@ -2,11 +2,12 @@
   "id": "jorge_density",
   "title": "DENSITY ALTITUD",
   "description": "Density altitude en metros, presion, temperatura afuera e IAT, y tu tiempo de 1/4 de milla corregido al nivel del mar",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "vendor": "custom",
   "loggingId": "OAJ3",
   "iconGlyph": "ambient",
   "mguHmi": [
+    "ID7",
     "ID8"
   ],
   "requires": {
@@ -122,6 +123,22 @@
       "unit": "mph",
       "default": 112,
       "hidden": true
+    },
+    {
+      "key": "trapUnit",
+      "label": "Unidad del trap speed",
+      "type": "choice",
+      "default": "kmh",
+      "options": [
+        [
+          "kmh",
+          "km/h"
+        ],
+        [
+          "mph",
+          "mph"
+        ]
+      ]
     },
     {
       "key": "theme",
