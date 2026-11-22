@@ -371,7 +371,7 @@ mgu.run({
         }
 
         /* ================= the race dash look: one box per value ================= */
-        const LOGO_BAND = 54;           // a strip under the boxes, Jorge's logo in its right corner on every tab
+        const LOGO_BAND = 54;           // a strip under the boxes, Jorge's logo centred in it on every tab
         function cornerLogo(cv, bottom) {
             const h = LOGO_BAND - 10, k = h / LOGO.h, w = LOGO.w * k;
             const L = G.layer('pp-corner|' + h, Math.ceil(w), Math.ceil(h), (c) => {
@@ -382,8 +382,10 @@ mgu.run({
                 });
             }, cv.textScale);
             const y = bottom - h;
-            cv.fillRect(16, y + h * 0.55, W - 32 - w - 20, 2, EDGE);   // a thin rule leading into the logo
-            cv.blit(L, W - 16 - w, y);
+            const lx = (W - w) / 2, ry = y + h * 0.55, gap = 24;    // centred, a thin rule either side
+            cv.fillRect(16, ry, lx - gap - 16, 2, EDGE);
+            cv.fillRect(lx + w + gap, ry, W - 16 - (lx + w + gap), 2, EDGE);
+            cv.blit(L, lx, y);
         }
         /** A box with a coloured header bar (black words on it); returns the body's top. */
         function panel(cv, x, y, w, h, label, hcol) {
