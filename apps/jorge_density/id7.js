@@ -10,7 +10,7 @@
  *
  * The air maths, the settings and the shared drawing stay in main.js and come in through create():
  *
- *   const v7 = require('./id7').create({ settings, air, thousands, F, card, bigNum, nudge, CAL, SCALE_M, colors });
+ *   const v7 = require('./id7').create({ settings, air, thousands, F, card, bigNum, nudge, trapUnit, nudgeTrap, CAL, SCALE_M, colors });
  *   v7.air(cv, t, d, r)   v7.times(cv, t, d, r)   v7.cal(cv, t)
  */
 const { withAlpha } = require('./kit/canvas');
@@ -24,7 +24,7 @@ const DIGIT = 0.7;                      // height of the 'num' font's digits / i
 const NO_BUTTONS = 'los botones - y + salen en Pantalla completa con GPU';
 
 function create(env) {
-    const { settings, air, thousands, F, card, bigNum, nudge, CAL, SCALE_M } = env;
+    const { settings, air, thousands, F, card, bigNum, nudge, trapUnit, nudgeTrap, CAL, SCALE_M } = env;
     const { GREEN, AMBER, BLUE, WHITE } = env.colors;
 
     const area = (cv) => {
@@ -99,24 +99,25 @@ function create(env) {
         const at = (f) => top + BODY + (bh - BODY) * f;     // a height in the card's content, 0 .. 1
         const et = Number(settings.get('et')), trap = Number(settings.get('trap'));
         const a = air(r.kpa, r.amb, settings.get('humidity'));
-        const k = (Number(settings.get('turbo')) || 0) / 100;
+        const k = (Number(settings.get('turbo')) || 0) / 100, u = trapUnit();
         // left: your run here
         const lw = 760, b = 76, wide = b + 36, x1 = X0 + 20;
         card(cv, X0, top, lw, bh);
         heading(cv, t, X0, top, 'TU PASADA AQUI', cv.own ? 'pon el tiempo de tu Dragy con - y +' : NO_BUTTONS, null, cv.own ? null : AMBER);
         const row = (y, key, s, unit, small, big, lo, hi, dec, size) => {
-            G.button(cv, t, x1, y - b / 2, b, b, '-', () => nudge(key, -small, lo, hi, dec), { key: key + '-' });
-            G.button(cv, t, x1 + b + 10, y - b / 2, wide, b, '-' + big, () => nudge(key, -big, lo, hi, dec), { key: key + '--' });
+            const go = key === 'trap' ? nudgeTrap : (by) => nudge(key, by, lo, hi, dec);
+            G.button(cv, t, x1, y - b / 2, b, b, '-', () => go(-small), { key: key + '-' });
+            G.button(cv, t, x1 + b + 10, y - b / 2, wide, b, '-' + big, () => go(-big), { key: key + '--' });
             const x0 = cv.own ? x1 + b + 10 + wide + 16 : x1 + 2;
             const nw = cv.text(s, x0, y + size * 0.36, size, WHITE, { font: 'num' });
             cv.text(unit, x0 + nw + 8, y + size * 0.36, 34, t.dim, { font: 'bold' });
             const bx = X0 + lw - 20 - b - 10 - wide;
-            G.button(cv, t, bx, y - b / 2, wide, b, '+' + big, () => nudge(key, big, lo, hi, dec), { key: key + '++' });
-            G.button(cv, t, bx + wide + 10, y - b / 2, b, b, '+', () => nudge(key, small, lo, hi, dec), { key: key + '+' });
+            G.button(cv, t, bx, y - b / 2, wide, b, '+' + big, () => go(big), { key: key + '++' });
+            G.button(cv, t, bx + wide + 10, y - b / 2, b, b, '+', () => go(small), { key: key + '+' });
         };
         row(at(0.25), 'et', et.toFixed(2), 's', 0.01, 0.1, 6, 25, 2, 124);
         cv.text('TRAP SPEED', x1 + 2, at(0.555), 26, t.dim, { font: 'bold', spacing: 2.5 });
-        row(at(0.78), 'trap', String(Math.round(trap)), 'mph', 1, 5, 40, 250, 0, 104);
+        row(at(0.78), 'trap', String(Math.round(trap * u.k)), u.label, 1, 5, u.lo, u.hi, 0, 104);
 
         // right: the same run at sea level
         const rx = X0 + lw + 66, rw = W - X0 - rx;
@@ -130,7 +131,7 @@ function create(env) {
         const f = Math.pow(Math.max(0.5, a.cf), k / 3);
         const etC = et / f, trapC = trap * f;
         bigNum(cv, t, rx + 22, at(0.43), etC.toFixed(2), 172, rw - 60, GREEN, 's', 46);
-        bigNum(cv, t, rx + 22, at(0.79), String(Math.round(trapC)), 126, rw - 60, GREEN, 'mph', 42);
+        bigNum(cv, t, rx + 22, at(0.79), String(Math.round(trapC * u.k)), 126, rw - 60, GREEN, u.label, 42);
         const lost = et - etC;
         const msg = 'EL AIRE TE ESTA ROBANDO ', lostS = lost.toFixed(2) + ' s';
         const mw = cv.text(msg, rx + 22, top + bh - 34, 27, t.dim, { font: 'bold', spacing: 2 });

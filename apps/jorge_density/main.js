@@ -5,7 +5,8 @@
  *   AIRE      density altitude (DA) in metres, green below the limit (3,050 m), amber above it;
  *             how much of a sea-level breath the engine gets; outside temp, pressure, IAT, humidity
  *   TIEMPOS   a 1/4 mile time and trap speed (from the Dragy, set with - and +) and the same run
- *             corrected to sea-level air (SAE J1349), softened for the turbo
+ *             corrected to sea-level air (SAE J1349), softened for the turbo; the trap speed in km/h
+ *             or mph (setting "trapUnit", km/h unless chosen otherwise)
  *   CALIBRAR  humidity (the car has no humidity sensor), how much the air hits a turbo car, DA limit
  *
  * Air density from pressure, outside temperature and humidity (dry air + water vapour), DA from the
@@ -135,29 +136,39 @@ mgu.run({
             settings.set(key, Number(G.clamp(v + by, lo, hi).toFixed(dec)));
             return render();
         }
+        /** The trap speed is kept in mph; it is shown and set in the unit of the "trapUnit" setting: its label, mph x k, limits. */
+        function trapUnit() {
+            return settings.get('trapUnit') === 'mph' ? { label: 'mph', k: 1, lo: 40, hi: 250 } : { label: 'km/h', k: 1.609344, lo: 64, hi: 402 };
+        }
+        /** by more (or less) on the trap speed as shown, in its unit. */
+        function nudgeTrap(by) {
+            const u = trapUnit(), shown = Math.round((Number(settings.get('trap')) || 0) * u.k);
+            settings.set('trap', Number((G.clamp(shown + by, u.lo, u.hi) / u.k).toFixed(4)));
+            return render();
+        }
         function renderTimes(cv, t, d, r) {
             const top = G.TOP + 6, bottom = G.pageBottom(cv) - 4, bh = bottom - top;
             const et = Number(settings.get('et')), trap = Number(settings.get('trap'));
             const a = air(r.kpa, r.amb, settings.get('humidity'));
-            const k = (Number(settings.get('turbo')) || 0) / 100;
+            const k = (Number(settings.get('turbo')) || 0) / 100, u = trapUnit();
             // left: your run here
             const lw = 720;
             card(cv, 16, top, lw, bh);
             heading(cv, t, 16, top, 'TU PASADA AQUI', 'pon el tiempo de tu Dragy con - y +');
             const row = (y, key, s, unit, small, big, lo, hi, dec, size) => {
-                const b = 62;
-                G.button(cv, t, 36, y - b / 2, b, b, '-', () => nudge(key, -small, lo, hi, dec), { key: key + '-' });
-                G.button(cv, t, 36 + b + 10, y - b / 2, b + 30, b, '-' + big, () => nudge(key, -big, lo, hi, dec), { key: key + '--' });
+                const b = 62, go = key === 'trap' ? nudgeTrap : (by) => nudge(key, by, lo, hi, dec);
+                G.button(cv, t, 36, y - b / 2, b, b, '-', () => go(-small), { key: key + '-' });
+                G.button(cv, t, 36 + b + 10, y - b / 2, b + 30, b, '-' + big, () => go(-big), { key: key + '--' });
                 const x0 = 36 + 2 * b + 50;
                 const nw = cv.text(s, x0, y + size * 0.36, size, WHITE, { font: 'num' });
                 cv.text(unit, x0 + nw + 8, y + size * 0.36, 30, t.dim, { font: 'bold' });
                 const bx = lw + 16 - 20 - 2 * b - 40;
-                G.button(cv, t, bx, y - b / 2, b + 30, b, '+' + big, () => nudge(key, big, lo, hi, dec), { key: key + '++' });
-                G.button(cv, t, bx + b + 40, y - b / 2, b, b, '+', () => nudge(key, small, lo, hi, dec), { key: key + '+' });
+                G.button(cv, t, bx, y - b / 2, b + 30, b, '+' + big, () => go(big), { key: key + '++' });
+                G.button(cv, t, bx + b + 40, y - b / 2, b, b, '+', () => go(small), { key: key + '+' });
             };
             row(top + 175, 'et', et.toFixed(2), 's', 0.01, 0.1, 6, 25, 2, 110);
             cv.text('TRAP SPEED', 38, top + 290, 22, t.dim, { font: 'bold', spacing: 2.5 });
-            row(top + 365, 'trap', String(Math.round(trap)), 'mph', 1, 5, 40, 250, 0, 90);
+            row(top + 365, 'trap', String(Math.round(trap * u.k)), u.label, 1, 5, u.lo, u.hi, 0, 90);
 
             // right: the same run at sea level
             const rx = 16 + lw + 70, rw = W - 16 - rx;
@@ -171,7 +182,7 @@ mgu.run({
             const f = Math.pow(Math.max(0.5, a.cf), k / 3);
             const etC = et / f, trapC = trap * f;
             bigNum(cv, t, rx + 22, top + 220, etC.toFixed(2), 150, rw - 60, GREEN, 's', 40);
-            bigNum(cv, t, rx + 22, top + 370, String(Math.round(trapC)), 110, rw - 60, GREEN, 'mph', 36);
+            bigNum(cv, t, rx + 22, top + 370, String(Math.round(trapC * u.k)), 110, rw - 60, GREEN, u.label, 36);
             const lost = et - etC;
             const msg = 'EL AIRE TE ESTA ROBANDO ', lostS = lost.toFixed(2) + ' s';
             const mw = cv.text(msg, rx + 22, top + bh - 30, 24, t.dim, { font: 'bold', spacing: 2 });
@@ -216,7 +227,7 @@ mgu.run({
         /* ---------- iDrive 7 ---------- */
         // its own layout of the same three pages (id7.js); on iDrive 8 the ones above, as they are
         const v7 = !ui.id8 && require('./id7').create({
-            settings, air, thousands, F, card, bigNum, nudge, CAL, SCALE_M, colors: { GREEN, AMBER, BLUE, WHITE },
+            settings, air, thousands, F, card, bigNum, nudge, trapUnit, nudgeTrap, CAL, SCALE_M, colors: { GREEN, AMBER, BLUE, WHITE },
         });
         function render7() {
             const t = ctx.theme(), d = car.data();
