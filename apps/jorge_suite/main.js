@@ -26,7 +26,8 @@ const LOGO = require('./logo');
 const W = 1600, H = 520;
 const BG = '#030507', WHITE = '#ffffff', DIM = '#8fa0b8', FAINT = '#5d6a7e', TRACK = '#141c28';
 const BLUE = '#4d9bff', BLUE0 = '#3a7bd5', BLUE1 = '#7fd4ff', ORANGE = '#ff6a2a', ORANGE0 = '#e04a10', ORANGE1 = '#ff8a3a';
-const GREEN = '#2fd27a', AMBER = '#ffb020', RED = '#ff3b3b';
+const GREEN = '#2fd27a', AMBER = '#ffb020', RED = '#ff3b3b', COLD = '#3d9bff';
+const KMH_PER_MPH = 1.609344;
 const L_PER_GAL = 3.78541, SCALE_M = 4000;
 // the look: 'termo' (a slim upright bar per value, the number beside it, the logo faint) or 'arco' (FLEX FUEL's arcs)
 const LOOK = 'arco';
@@ -217,7 +218,7 @@ mgu.run({
                 const e = eta(def.key, v, lo, d);
                 const text = e.state === 'off' ? 'FRIO  MOTOR APAGADO' : e.state === 'stalled' ? 'FRIO  NO CALIENTA'
                     : 'FRIO  LISTO EN ' + (e.min > 60 ? '+60' : Math.max(1, Math.round(e.min))) + ' MIN';
-                return Object.assign(base, { col: RED, text, fill });
+                return Object.assign(base, { col: COLD, text, fill });     // cold: blue, not red (red is hot)
             }
             return Object.assign(base, { col: GREEN, text: READY, fill });
         }
@@ -308,14 +309,16 @@ mgu.run({
             value(cv, hv.l, by + 45, et.toFixed(2), 120, WHITE, 's', 30);
             const ty = top + 300, f = a ? Math.pow(Math.max(0.5, a.cf), k / 3) : null;
             cv.text('TRAP', hv.l, ty - 50, 17, FAINT, { font: 'bold', align: 'center', spacing: 2 });
-            G.button(cv, ctxTheme, hv.l - 160, ty - 30, 60, 60, '-', () => nudge('trap', -1, 40, 250, 0), { key: 'trap-' });
-            G.button(cv, ctxTheme, hv.l + 100, ty - 30, 60, 60, '+', () => nudge('trap', 1, 40, 250, 0), { key: 'trap+' });
-            value(cv, hv.l, ty + 18, String(Math.round(trap)), 56, WHITE, 'mph', 18);
+            // the trap is kept in mph; shown (and stepped by one) in km/h or mph, as AJUSTES says
+            const kmh = settings.get('trapUnit') !== 'mph', tk = kmh ? KMH_PER_MPH : 1, tu = kmh ? 'km/h' : 'mph';
+            G.button(cv, ctxTheme, hv.l - 160, ty - 30, 60, 60, '-', () => nudge('trap', -1 / tk, 40, 250, 3), { key: 'trap-' });
+            G.button(cv, ctxTheme, hv.l + 100, ty - 30, 60, 60, '+', () => nudge('trap', 1 / tk, 40, 250, 3), { key: 'trap+' });
+            value(cv, hv.l, ty + 18, String(Math.round(trap * tk)), 56, WHITE, tu, 18);
             // the right half mirrors the left: same places, the run in sea-level air
             title(cv, hv.r, top, 'A NIVEL DEL MAR', GREEN);
             value(cv, hv.r, by + 45, f ? (et / f).toFixed(2) : '--', 120, GREEN, f ? 's' : '', 30);
             cv.text('TRAP', hv.r, ty - 50, 17, FAINT, { font: 'bold', align: 'center', spacing: 2 });
-            value(cv, hv.r, ty + 18, f ? String(Math.round(trap * f)) : '--', 56, GREEN, f ? 'mph' : '', 18);
+            value(cv, hv.r, ty + 18, f ? String(Math.round(trap * f * tk)) : '--', 56, GREEN, f ? tu : '', 18);
         }
 
         /* ================= AJUSTES: three groups ================= */
@@ -332,6 +335,8 @@ mgu.run({
                 { label: 'HUMEDAD', key: 'humidity', unit: '%', list: true, fmt: (x) => String(x) },
                 { label: 'EFECTO TURBO', key: 'turbo', unit: '%', list: true, fmt: (x) => String(x) },
                 { label: 'DA VERDE HASTA', key: 'daLimit', unit: 'm', by: 50, lo: 0, hi: 5000, dec: 0, fmt: (x) => thousands(x) },
+                { label: 'TRAP SPEED EN', key: 'trapUnit', unit: '', fmt: (x) => (x === 'mph' ? 'MPH' : 'KM/H'),
+                    go: () => { settings.set('trapUnit', settings.get('trapUnit') === 'mph' ? 'kmh' : 'mph'); return render(); } },
             ],
         ];
         function renderSet(cv, top, bottom) {
@@ -358,7 +363,7 @@ mgu.run({
                 }
                 value(cv, cx, y0 + 200, s.fmt(settings.get(s.key)), 110, WHITE, s.unit, 30);
                 if (s.why) cv.text(ff.ethWhy(), cx, y0 + 250, 16, FAINT, { font: 'bold', align: 'center' });
-                const go = (dir) => (s.list ? stepList(s.key, dir) : nudge(s.key, dir * s.by, s.lo, s.hi, s.dec));
+                const go = (dir) => (s.go ? s.go(dir) : s.list ? stepList(s.key, dir) : nudge(s.key, dir * s.by, s.lo, s.hi, s.dec));
                 G.button(cv, ctxTheme, cx - 110 - b / 2, top + h - b - 20, b, b, '-', () => go(-1), { key: s.key + '-' });
                 G.button(cv, ctxTheme, cx + 110 - b / 2, top + h - b - 20, b, b, '+', () => go(1), { key: s.key + '+' });
             });

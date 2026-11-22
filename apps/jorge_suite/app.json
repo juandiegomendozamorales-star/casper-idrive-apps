@@ -2,7 +2,7 @@
   "id": "jorge_suite",
   "title": "PEREA PERFORMANCE",
   "description": "ESSENTIALS, etanol y density altitud en una sola app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "vendor": "Perea Performance",
   "loggingId": "OAJ5",
   "mguHmi": [
@@ -430,6 +430,23 @@
       "type": "number",
       "unit": "mph",
       "default": 112,
+      "hidden": true
+    },
+    {
+      "key": "trapUnit",
+      "label": "Trap speed en",
+      "type": "choice",
+      "default": "kmh",
+      "options": [
+        [
+          "kmh",
+          "km/h"
+        ],
+        [
+          "mph",
+          "mph"
+        ]
+      ],
       "hidden": true
     },
     {
