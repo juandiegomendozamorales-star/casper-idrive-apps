@@ -29,7 +29,7 @@ const BLUE = '#4d9bff', BLUE0 = '#3a7bd5', BLUE1 = '#7fd4ff', ORANGE = '#ff6a2a'
 const GREEN = '#2fd27a', AMBER = '#ffb020', RED = '#ff3b3b';
 const L_PER_GAL = 3.78541, SCALE_M = 4000;
 // the look: 'termo' (a slim upright bar per value, the number beside it, the logo faint) or 'arco' (FLEX FUEL's arcs)
-const LOOK = 'termo';
+const LOOK = 'arco';
 const LOGO_ALPHA = LOOK === 'termo' ? 0.12 : 0.30;
 const F = (c) => (G.isNum(c) ? c * 9 / 5 + 32 : null);
 
@@ -248,11 +248,10 @@ mgu.run({
         const eNum = (e) => (G.isNum(e) ? 'E' + Math.round(e) : '--');
         function renderEth(cv, top, bottom, n) {
             const hv = halves(), h = bottom - top, tank = num('tank') || 15.6;
-            const alcohol = G.isNum(n.eth) && G.isNum(n.gal) ? (n.gal * n.eth / 100).toFixed(1) + ' gal' : '--';
             gauge(cv, { cx: hv.l - 40, top, h, w: hv.w, tUnit: n.manual ? 'MANUAL' : '', label: 'ETANOL', frac: G.isNum(n.eth) ? n.eth / 100 : null, big: eNum(n.eth),
-                unit: n.manual ? 'MANUAL' : '% ETANOL', c0: BLUE0, c1: BLUE1, ends: ['E0', 'E100'], foot: ['MEZCLA ACTUAL', eNum(n.eth)] });
+                unit: n.manual ? 'MANUAL' : '', c0: BLUE0, c1: BLUE1 });
             gauge(cv, { cx: hv.r + 40, top, h, w: hv.w, tUnit: 'gal', label: 'GASOLINA', frac: G.isNum(n.gal) ? n.gal / tank : null, big: gal(n.gal),
-                unit: 'GALONES', c0: ORANGE0, c1: ORANGE1, ends: ['VACIO', 'LLENO'], foot: ['ALCOHOL ADENTRO', alcohol] });
+                unit: 'GALONES', c0: ORANGE0, c1: ORANGE1 });
         }
         function mix(n) {
             const T = num('target'), P = num('purity'), tank = num('tank') || 15.6;
@@ -293,12 +292,12 @@ mgu.run({
             const col = a ? (a.da < limit ? GREEN : AMBER) : DIM;
             gauge(cv, { cx: hv.l - 40, top, h, w: hv.w, tUnit: 'm', label: 'DENSITY ALTITUDE', frac: a ? dam / SCALE_M : null,
                 big: a ? thousands(Math.round(dam / 10) * 10) : '--', bigCol: col, bigScale: 0.85, unit: 'METROS', unitCol: col,
-                c0: withAlpha(col, 0.55), c1: col, ends: ['0', '4,000'], marks: [limit / SCALE_M],
+                c0: withAlpha(col, 0.55), c1: col, marks: [limit / SCALE_M],
                 foot: ['AMBIENTE', (G.isNum(r.amb) ? Math.round(F(r.amb)) + '°F' : '--') + '    PRESION ' + (G.isNum(r.kpa) ? (r.kpa * 0.2953).toFixed(2) + ' inHg' : '--'), WHITE] });
             const ratio = a ? a.ratio * 100 : null;
             gauge(cv, { cx: hv.r + 40, top, h, w: hv.w, label: 'AIRE PARA EL MOTOR', frac: G.isNum(ratio) ? ratio / 100 : null,
                 big: G.isNum(ratio) ? String(Math.round(ratio)) : '--', bigUnit: G.isNum(ratio) ? '%' : '', unit: 'VS NIVEL MAR', c0: BLUE0, c1: BLUE1,
-                ends: ['0', '100'], foot: ['IAT', (G.isNum(r.iat) ? Math.round(F(r.iat)) + '°F' : '--') + '    HUMEDAD ' + rh + '%', WHITE] });
+                foot: ['IAT', (G.isNum(r.iat) ? Math.round(F(r.iat)) + '°F' : '--') + '    HUMEDAD ' + rh + '%', WHITE] });
         }
         function renderTimes(cv, top, r) {
             const hv = halves(), et = num('et'), trap = num('trap'), b = 70, by = top + 150;
@@ -307,16 +306,16 @@ mgu.run({
             G.button(cv, ctxTheme, hv.l - 250, by - b / 2, b, b, '-', () => nudge('et', -0.01, 6, 25, 2), { key: 'et-' });
             G.button(cv, ctxTheme, hv.l + 250 - b, by - b / 2, b, b, '+', () => nudge('et', 0.01, 6, 25, 2), { key: 'et+' });
             value(cv, hv.l, by + 45, et.toFixed(2), 120, WHITE, 's', 30);
-            const ty = top + 300;
+            const ty = top + 300, f = a ? Math.pow(Math.max(0.5, a.cf), k / 3) : null;
             cv.text('TRAP', hv.l, ty - 50, 17, FAINT, { font: 'bold', align: 'center', spacing: 2 });
             G.button(cv, ctxTheme, hv.l - 160, ty - 30, 60, 60, '-', () => nudge('trap', -1, 40, 250, 0), { key: 'trap-' });
             G.button(cv, ctxTheme, hv.l + 100, ty - 30, 60, 60, '+', () => nudge('trap', 1, 40, 250, 0), { key: 'trap+' });
             value(cv, hv.l, ty + 18, String(Math.round(trap)), 56, WHITE, 'mph', 18);
+            // the right half mirrors the left: same places, the run in sea-level air
             title(cv, hv.r, top, 'A NIVEL DEL MAR', GREEN);
-            if (!a) { value(cv, hv.r, by + 45, '--', 120, GREEN); return; }
-            const f = Math.pow(Math.max(0.5, a.cf), k / 3), etC = et / f, trapC = trap * f;
-            value(cv, hv.r, by + 45, etC.toFixed(2), 120, GREEN, 's', 30);
-            pair(cv, hv.r, top + 250, [['TRAP', String(Math.round(trapC)), GREEN, 'mph'], ['EL AIRE TE ROBA', (et - etC).toFixed(2), AMBER, 's']]);
+            value(cv, hv.r, by + 45, f ? (et / f).toFixed(2) : '--', 120, GREEN, f ? 's' : '', 30);
+            cv.text('TRAP', hv.r, ty - 50, 17, FAINT, { font: 'bold', align: 'center', spacing: 2 });
+            value(cv, hv.r, ty + 18, f ? String(Math.round(trap * f)) : '--', 56, GREEN, f ? 'mph' : '', 18);
         }
 
         /* ================= AJUSTES: three groups ================= */
