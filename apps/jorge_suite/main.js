@@ -371,6 +371,20 @@ mgu.run({
         }
 
         /* ================= the race dash look: one box per value ================= */
+        const LOGO_BAND = 54;           // a strip under the boxes, Jorge's logo in its right corner on every tab
+        function cornerLogo(cv, bottom) {
+            const h = LOGO_BAND - 10, k = h / LOGO.h, w = LOGO.w * k;
+            const L = G.layer('pp-corner|' + h, Math.ceil(w), Math.ceil(h), (c) => {
+                LOGO.shapes.forEach((s) => {
+                    const pts = [];
+                    for (let i = 0; i < s.p.length; i += 2) pts.push([s.p[i] * k, s.p[i + 1] * k]);
+                    c.fill(pts, s.hole ? BG : s.c);
+                });
+            }, cv.textScale);
+            const y = bottom - h;
+            cv.fillRect(16, y + h * 0.55, W - 32 - w - 20, 2, EDGE);   // a thin rule leading into the logo
+            cv.blit(L, W - 16 - w, y);
+        }
         /** A box with a coloured header bar (black words on it); returns the body's top. */
         function panel(cv, x, y, w, h, label, hcol) {
             cv.roundRect(x, y, w, h, 6, PANEL);
@@ -535,8 +549,10 @@ mgu.run({
             const t = ctxTheme = ctx.theme(), d = car.data();
             ff.tick(ui.isVisible('MAIN') && (page === P_ETH || page === P_CALC || (page === P_SET && group === 1)), !!d.demo);
             const cv = ctx.canvas(W, H).clear(BG);
-            const top = G.TOP + 6, bottom = G.pageBottom(cv) - 4;
+            const top = G.TOP + 6; let bottom = G.pageBottom(cv) - 4;
             if (LOOK === 'panel') {
+                cornerLogo(cv, bottom);
+                bottom -= LOGO_BAND;
                 if (page === P_ESS) pEss(cv, top, bottom, d);
                 else if (page === P_ETH) pEth(cv, top, bottom, tankNow(d));
                 else if (page === P_CALC) pCalc(cv, top, bottom, tankNow(d));
