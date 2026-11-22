@@ -27,7 +27,10 @@ const W = 1600, H = 520;
 const BG = '#030507', WHITE = '#ffffff', DIM = '#8fa0b8', FAINT = '#5d6a7e', TRACK = '#141c28';
 const BLUE = '#4d9bff', BLUE0 = '#3a7bd5', BLUE1 = '#7fd4ff', ORANGE = '#ff6a2a', ORANGE0 = '#e04a10', ORANGE1 = '#ff8a3a';
 const GREEN = '#2fd27a', AMBER = '#ffb020', RED = '#ff3b3b';
-const L_PER_GAL = 3.78541, LOGO_ALPHA = 0.30, SCALE_M = 4000;
+const L_PER_GAL = 3.78541, SCALE_M = 4000;
+// the look: 'termo' (a slim upright bar per value, the number beside it, the logo faint) or 'arco' (FLEX FUEL's arcs)
+const LOOK = 'termo';
+const LOGO_ALPHA = LOOK === 'termo' ? 0.12 : 0.30;
 const F = (c) => (G.isNum(c) ? c * 9 / 5 + 32 : null);
 
 const TABS = ['ESSENTIALS', 'ETANOL', 'CALCULADORA', 'DENSITY', 'TIEMPOS', 'AJUSTES'];
@@ -107,7 +110,33 @@ mgu.run({
         /**
          * The big arc of FLEX FUEL: o = { cx, top, h, label, frac, big, bigCol, unit, unitCol, c0, c1, ends, foot: [label, fig, col], marks }
          */
+        /**
+         * The thermometer: a slim upright bar at the slot's left, filled from the bottom; beside it, at the bottom,
+         * the label, the number (o.tUnit after it) and the footer. o.w is the slot's width (centred on o.cx).
+         */
+        function thermo(cv, o) {
+            const w = o.w || 760, x0 = o.cx - w / 2 + (w > 500 ? 70 : 20), bw = w > 500 ? 26 : 22;
+            const y0 = o.top + 40, y1 = o.top + o.h - 30, bh = y1 - y0;
+            cv.roundRect(x0, y0, bw, bh, bw / 2, withAlpha(TRACK, 0.95));
+            if (G.isNum(o.frac) && o.frac > 0.005) {
+                const fh = Math.max(bw, bh * G.clamp(o.frac, 0, 1));
+                cv.roundRect(x0, y1 - fh, bw, fh, bw / 2, o.c1);
+            }
+            (o.marks || []).forEach((f) => cv.fillRect(x0 - 8, y1 - bh * G.clamp(f, 0, 1) - 1.5, bw + 16, 3, withAlpha(WHITE, 0.75)));
+            const tx = x0 + bw + (w > 500 ? 50 : 30), big = w > 500 ? 190 : 110;
+            const nb = y1 - 48;
+            cv.text(o.label, tx, nb - big * 0.78 - 22, w > 500 ? 26 : 20, DIM, { font: 'bold', spacing: 4 });
+            const font = /^[0-9.,:%-]*$/.test(o.big) ? 'num' : 'bold', size = big * (o.bigScale || 1);
+            const nw = cv.text(o.big, tx, nb, size, o.bigCol || WHITE, { font });
+            const u = o.tUnit != null ? o.tUnit : o.bigUnit;
+            if (u) cv.text(u, tx + nw + 8, nb, w > 500 ? 40 : 26, DIM, { font: 'bold' });
+            if (o.foot) {
+                const lw = o.foot[0] ? cv.text(o.foot[0] + ' ', tx, y1, 20, DIM, { font: 'bold', spacing: 1.5 }) : 0;
+                cv.text(o.foot[1], tx + lw, y1, 20, o.foot[2] || BLUE, { font: 'bold', spacing: 1.5 });
+            }
+        }
         function gauge(cv, o) {
+            if (LOOK === 'termo') return thermo(cv, o);
             const r1 = o.r || G.clamp((o.h - 170) / 1.5, 150, 215), r0 = r1 * 0.8, z = r1 / 150;
             const cx = o.cx, cy = o.top + 66 + r1;
             title(cv, cx, o.top, o.label);
@@ -199,8 +228,9 @@ mgu.run({
                 const j = judge(def, v[def.key], d), cx = 16 + w * i + w / 2;
                 const s = G.isNum(v[def.key]) ? String(Math.round(G.smooth(def.key, v[def.key]))) : '--';
                 const col = j.alert ? withAlpha(RED, 0.75 + 0.25 * Math.sin(now / 200)) : j.col;
-                gauge(cv, { cx, top, h, r: 150, label: def.label, frac: j.fill, big: s, bigCol: col, unit: '°F', unitCol: DIM,
-                    c0: withAlpha(j.col, 0.55), c1: j.col, marks: j.marks });
+                gauge(cv, { cx, top, h, w, r: 150, label: def.label, frac: j.fill, big: s, bigCol: col, unit: '°F', unitCol: DIM, tUnit: '°F',
+                    c0: withAlpha(j.col, 0.55), c1: j.col, marks: j.marks, foot: LOOK === 'termo' ? ['', j.text, j.col] : null });
+                if (LOOK === 'termo') return;
                 let ts = 22;
                 while (ts > 14 && cv.textWidth(j.text, ts, { font: 'bold', spacing: 1.5 }) > w - 20) ts -= 1;
                 cv.text(j.text, cx, top + h - 26, ts, j.col, { font: 'bold', align: 'center', spacing: 1.5 });
@@ -219,9 +249,9 @@ mgu.run({
         function renderEth(cv, top, bottom, n) {
             const hv = halves(), h = bottom - top, tank = num('tank') || 15.6;
             const alcohol = G.isNum(n.eth) && G.isNum(n.gal) ? (n.gal * n.eth / 100).toFixed(1) + ' gal' : '--';
-            gauge(cv, { cx: hv.l - 40, top, h, label: 'ETANOL', frac: G.isNum(n.eth) ? n.eth / 100 : null, big: eNum(n.eth),
+            gauge(cv, { cx: hv.l - 40, top, h, w: hv.w, tUnit: n.manual ? 'MANUAL' : '', label: 'ETANOL', frac: G.isNum(n.eth) ? n.eth / 100 : null, big: eNum(n.eth),
                 unit: n.manual ? 'MANUAL' : '% ETANOL', c0: BLUE0, c1: BLUE1, ends: ['E0', 'E100'], foot: ['MEZCLA ACTUAL', eNum(n.eth)] });
-            gauge(cv, { cx: hv.r + 40, top, h, label: 'GASOLINA', frac: G.isNum(n.gal) ? n.gal / tank : null, big: gal(n.gal),
+            gauge(cv, { cx: hv.r + 40, top, h, w: hv.w, tUnit: 'gal', label: 'GASOLINA', frac: G.isNum(n.gal) ? n.gal / tank : null, big: gal(n.gal),
                 unit: 'GALONES', c0: ORANGE0, c1: ORANGE1, ends: ['VACIO', 'LLENO'], foot: ['ALCOHOL ADENTRO', alcohol] });
         }
         function mix(n) {
@@ -261,12 +291,12 @@ mgu.run({
             const hv = halves(), h = bottom - top, limit = num('daLimit'), rh = num('humidity');
             const a = air(r.kpa, r.amb, rh), dam = a ? G.smooth('da', a.da) : null;
             const col = a ? (a.da < limit ? GREEN : AMBER) : DIM;
-            gauge(cv, { cx: hv.l - 40, top, h, label: 'DENSITY ALTITUDE', frac: a ? dam / SCALE_M : null,
+            gauge(cv, { cx: hv.l - 40, top, h, w: hv.w, tUnit: 'm', label: 'DENSITY ALTITUDE', frac: a ? dam / SCALE_M : null,
                 big: a ? thousands(Math.round(dam / 10) * 10) : '--', bigCol: col, bigScale: 0.85, unit: 'METROS', unitCol: col,
                 c0: withAlpha(col, 0.55), c1: col, ends: ['0', '4,000'], marks: [limit / SCALE_M],
                 foot: ['AMBIENTE', (G.isNum(r.amb) ? Math.round(F(r.amb)) + '°F' : '--') + '    PRESION ' + (G.isNum(r.kpa) ? (r.kpa * 0.2953).toFixed(2) + ' inHg' : '--'), WHITE] });
             const ratio = a ? a.ratio * 100 : null;
-            gauge(cv, { cx: hv.r + 40, top, h, label: 'AIRE PARA EL MOTOR', frac: G.isNum(ratio) ? ratio / 100 : null,
+            gauge(cv, { cx: hv.r + 40, top, h, w: hv.w, label: 'AIRE PARA EL MOTOR', frac: G.isNum(ratio) ? ratio / 100 : null,
                 big: G.isNum(ratio) ? String(Math.round(ratio)) : '--', bigUnit: G.isNum(ratio) ? '%' : '', unit: 'VS NIVEL MAR', c0: BLUE0, c1: BLUE1,
                 ends: ['0', '100'], foot: ['IAT', (G.isNum(r.iat) ? Math.round(F(r.iat)) + '°F' : '--') + '    HUMEDAD ' + rh + '%', WHITE] });
         }
