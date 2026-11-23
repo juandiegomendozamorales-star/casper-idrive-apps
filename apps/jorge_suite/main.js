@@ -22,6 +22,7 @@ const EssSensors = require('./ess_sensors').Sensors;
 const DaSensors = require('./da_sensors').Sensors;
 const FfSensors = require('./ff_sensors').Sensors;
 const LOGO = require('./logo');
+const Health = require('./health');
 
 const W = 1600, H = 520;
 const BG = '#030507', WHITE = '#ffffff', DIM = '#8fa0b8', FAINT = '#5d6a7e', TRACK = '#141c28';
@@ -70,6 +71,7 @@ mgu.run({
         const da = new DaSensors(ctx, log, shown([P_DA, P_TIME])).start();
         const ff = new FfSensors(ctx, log).start();
         const num = (k) => Number(settings.get(k));
+        const health = Health.start(log, () => TABS[page]);
 
         /* ---------- the logo in the background ---------- */
         function watermark(cv, top, bottom) {
@@ -372,7 +374,7 @@ mgu.run({
 
         /* ================= the race dash look: one box per value ================= */
         const LOGO_BAND = 54;           // a strip under the boxes, Jorge's logo centred in it on every tab
-        function cornerLogo(cv, bottom) {
+        function cornerLogo(cv, bottom, note) {
             const h = LOGO_BAND - 10, k = h / LOGO.h, w = LOGO.w * k;
             const L = G.layer('pp-corner|' + h, Math.ceil(w), Math.ceil(h), (c) => {
                 LOGO.shapes.forEach((s) => {
@@ -383,7 +385,8 @@ mgu.run({
             }, cv.textScale);
             const y = bottom - h;
             const lx = (W - w) / 2, ry = y + h * 0.55, gap = 24;    // centred, a thin rule either side
-            cv.fillRect(16, ry, lx - gap - 16, 2, EDGE);
+            if (note) cv.text(note, 16, ry + 7, 17, FAINT, { font: LABF, spacing: 1 });
+            else cv.fillRect(16, ry, lx - gap - 16, 2, EDGE);
             cv.fillRect(lx + w + gap, ry, W - 16 - (lx + w + gap), 2, EDGE);
             cv.blit(L, lx, y);
         }
@@ -553,7 +556,7 @@ mgu.run({
             const cv = ctx.canvas(W, H).clear(BG);
             const top = G.TOP + 6; let bottom = G.pageBottom(cv) - 4;
             if (LOOK === 'panel') {
-                cornerLogo(cv, bottom);
+                cornerLogo(cv, bottom, page === P_SET ? health.before : '');
                 bottom -= LOGO_BAND;
                 if (page === P_ESS) pEss(cv, top, bottom, d);
                 else if (page === P_ETH) pEth(cv, top, bottom, tankNow(d));
