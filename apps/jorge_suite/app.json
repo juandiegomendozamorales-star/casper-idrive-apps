@@ -2,10 +2,11 @@
   "id": "jorge_suite",
   "title": "PEREA PERFORMANCE",
   "description": "ESSENTIALS, etanol y density altitud en una sola app",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "vendor": "Perea Performance",
   "loggingId": "OAJ5",
   "mguHmi": [
+    "ID7",
     "ID8"
   ],
   "requires": {

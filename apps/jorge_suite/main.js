@@ -73,6 +73,22 @@ mgu.run({
         const ff = new FfSensors(ctx, log).start();
         const num = (k) => Number(settings.get(k));
         const health = Health.start(log, () => TABS[page]);
+        // iDrive 7 (1920 x 720): the kit draws the page 1.16 x there against 1.42 x on iDrive 8, so the words
+        // (not the big figures, which already fill their boxes) and the bars they sit in are a fifth bigger
+        const ID7 = !ui.id8, Z = ID7 ? 1.2 : 1;
+        const HEAD = Math.round(HEAD_H * Z), CHEAD = Math.round(32 * Z);
+        function bigWords(cv) {
+            const up = (size) => (size <= 34 ? size * Z : size);
+            return new Proxy(cv, {
+                get(o, k) {
+                    if (k === 'text') return (s, x, y, size, ...r) => o.text(s, x, y, up(size), ...r);
+                    if (k === 'textWidth') return (s, size, ...r) => o.textWidth(s, up(size), ...r);
+                    const v = o[k];
+                    return typeof v === 'function' ? v.bind(o) : v;
+                },
+                set(o, k, v) { o[k] = v; return true; },
+            });
+        }
 
         /* ---------- ESSENTIALS boxes: how many (gN) and which value in each (g1..g8, channels.js) ---------- */
         const TEMP_DEF = {};
@@ -435,7 +451,7 @@ mgu.run({
         }
 
         /* ================= the race dash look: one box per value ================= */
-        const LOGO_BAND = 54;           // a strip under the boxes, Jorge's logo centred in it on every tab
+        const LOGO_BAND = Math.round(54 * Z);           // a strip under the boxes, Jorge's logo centred in it on every tab
         function cornerLogo(cv, bottom, note) {
             const h = LOGO_BAND - 10, k = h / LOGO.h, w = LOGO.w * k;
             const L = G.layer('pp-corner|' + h, Math.ceil(w), Math.ceil(h), (c) => {
@@ -456,12 +472,12 @@ mgu.run({
         function panel(cv, x, y, w, h, label, hcol, tight) {
             cv.roundRect(x, y, w, h, 6, PANEL);
             cv.strokeRoundRect(x, y, w, h, 6, 2.5, EDGE);
-            cv.roundRect(x + 1.5, y + 1.5, w - 3, HEAD_H, 4, hcol);
+            cv.roundRect(x + 1.5, y + 1.5, w - 3, HEAD, 4, hcol);
             let ls = 25;
             const sp = tight ? 1 : 4;          // channel names (their own case, e.g. 'Oil temp'): no wide spacing
             while (ls > 16 && cv.textWidth(label, ls, { font: LABF, spacing: sp }) > w - 36) ls--;
-            cv.text(label, x + 18, y + HEAD_H - 11, ls, '#000000', { font: LABF, spacing: sp });
-            return y + HEAD_H;
+            cv.text(label, x + 18, y + HEAD - 11, ls, '#000000', { font: LABF, spacing: sp });
+            return y + HEAD;
         }
         /** The big figure (Saira) and its unit (Barlow), centred on cx as one. */
         function figure(cv, cx, base, s, size, col, unit, usize) {
@@ -517,7 +533,7 @@ mgu.run({
 
         /** A smaller box for 5 to 8 values: the status beside the name, a thin bar, MIN / MAX only for the temperatures. */
         function compactBox(cv, b, o) {
-            const HH = 32;
+            const HH = CHEAD;
             cv.roundRect(b.x, b.y, b.w, b.h, 6, PANEL);
             cv.strokeRoundRect(b.x, b.y, b.w, b.h, 6, 2.5, EDGE);
             cv.roundRect(b.x + 1.5, b.y + 1.5, b.w - 3, HH, 4, o.hcol);
@@ -719,7 +735,7 @@ mgu.run({
         function render() {
             const t = ctxTheme = ctx.theme(), d = car.data();
             ff.tick(ui.isVisible('MAIN') && (page === P_ETH || page === P_CALC || (page === P_SET && group === 1) || (page === P_ESS && usesFf())), !!d.demo);
-            const cv = ctx.canvas(W, H).clear(BG);
+            const raw = ctx.canvas(W, H).clear(BG), cv = ID7 ? bigWords(raw) : raw;
             const top = G.TOP + 6; let bottom = G.pageBottom(cv) - 4;
             if (LOOK === 'panel') {
                 cornerLogo(cv, bottom, page === P_SET ? health.before : '');
@@ -731,7 +747,7 @@ mgu.run({
                 else if (page === P_TIME) pTimes(cv, top, bottom, readings(d));
                 else pSet(cv, top, bottom);
                 G.frame(cv, t, TABS, page, [d.demo && { text: 'DEMO' }]);
-                return ui.image('MAIN_GFX', cv);
+                return ui.image('MAIN_GFX', raw);
             }
             watermark(cv, top + 20, bottom - 50);
             if (page === P_ESS) renderEss(cv, top, bottom, d);
@@ -741,7 +757,7 @@ mgu.run({
             else if (page === P_TIME) renderTimes(cv, top, readings(d));
             else renderSet(cv, top, bottom);
             G.frame(cv, t, TABS, page, [d.demo && { text: 'DEMO' }]);
-            return ui.image('MAIN_GFX', cv);
+            return ui.image('MAIN_GFX', raw);
         }
 
         if (ui.onVisible) ui.onVisible((name, on) => { if (name === 'MAIN' && !on) ff.tick(false); });
