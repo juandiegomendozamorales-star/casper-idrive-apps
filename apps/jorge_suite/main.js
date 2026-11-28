@@ -83,10 +83,19 @@ mgu.run({
             return out;
         }
         ess.wanted = () => {
-            const s = slots(), extra = s.filter((c) => c.src === 'dme');
-            if (extra.some((c) => c.gauge)) extra.push(CH.BARO);
+            const s = slots(), extra = [];
+            const add = (c) => { if (c && extra.indexOf(c) < 0) extra.push(c); };
+            s.forEach((c) => {
+                if (c.src === 'dme') add(c);
+                if (c.src === 'calc') c.of.forEach((id) => add(CH.BY_ID[id]));
+                if (c.alt) add(ALT[c.id]);
+            });
+            if (extra.some((c) => c.gauge)) add(CH.BARO);
             return { iat: s.some((c) => c.id === 'iat'), gb: s.some((c) => c.id === 'gb'), extra };
         };
+        // a value the flex fuel reads may also come straight from the engine unit (c.alt): read that too, used when the other has none
+        const ALT = {};
+        CH.CHANNELS.forEach((c) => { if (c.alt) ALT[c.id] = { id: c.id + '_dme', every: 1000, cands: c.alt }; });
         const usesFf = () => slots().some((c) => c.src === 'ff');
         /** A picked value in the unit shown, or null. */
         function chValue(c, d, tv) {
@@ -95,7 +104,9 @@ mgu.run({
                 const demo = { boost: w(2, 22, 5), boostTarget: w(4, 23, 5), eth: 38, ethActive: 38, fuel: 6.0, rail: w(1200, 4400, 6),
                     lambda: w(0.8, 1.0, 4), stft: w(-4, 4, 3), ltft: 1.6, rpm: w(900, 6800, 5), load: w(20, 160, 5), loadReq: w(25, 165, 5),
                     timing: w(2, 14, 4), throttle: w(5, 100, 5), pedal: w(0, 100, 5), maf: w(8, 320, 5), gear: 3, speed: w(40, 180, 9),
-                    amb: 66, batt: 14.2 };
+                    amb: 66, batt: 14.2, boostMani: w(1, 20, 5), boostDev: w(-1.5, 1.5, 3), lambdaTarget: w(0.8, 1.0, 4), timing2: w(2, 14, 4.2),
+                    timing3: w(2, 14, 4.4), timing4: w(2, 14, 4.6), torque: w(80, 620, 5), throttleReq: w(5, 100, 5), cat: F(w(28, 55, 9)),
+                    egt: F(w(450, 900, 8)), oilP: w(25, 75, 5) };
                 if (c.temp) return tv[c.id];
                 return demo[c.id];
             }
@@ -103,7 +114,13 @@ mgu.run({
             let v = null;
             if (c.src === 'car') v = d[c.key];
             else if (c.src === 'da') v = da[c.key]();
-            else if (c.src === 'ff') v = c.key === 'litres' ? ff.litres() : ff.ethPart(c.key);
+            else if (c.src === 'ff') {
+                v = c.key === 'litres' ? ff.litres() : ff.ethPart(c.key);
+                if (!G.isNum(v) && c.alt) v = ess.extra(c.id + '_dme');
+            } else if (c.src === 'calc') {
+                const a = chValue(CH.BY_ID[c.of[0]], d, tv), b = chValue(CH.BY_ID[c.of[1]], d, tv);
+                return G.isNum(a) && G.isNum(b) ? a - b : null;
+            }
             else if (c.src === 'dme') {
                 v = ess.extra(c.id);
                 if (G.isNum(v) && c.gauge) { const b = ess.extra('baro'); v = (v - (G.isNum(b) ? b : 101.3)) * CH.PSI_PER_KPA; }
@@ -616,25 +633,49 @@ mgu.run({
             figure(cv, b.x + b.w / 2, y2 + 80 * 0.36, f ? String(Math.round(trap * f * tk)) : '--', 80, GREEN, f ? tu : '', 28);
         }
         /** AJUSTES > ESSENTIALS: how many boxes, the value in each (< >), MIN / MAX for the temperatures. */
+        let picking = null;               // the box whose value is being chosen from the list, or null
+        /** Every value, 5 across: tap one to put it in the box. */
+        function pickList(cv, y0, bottom) {
+            const key = 'g' + (picking + 1), cur = slots()[picking];
+            cv.text('RECUADRO ' + (picking + 1), 16, y0 + 32, 24, WHITE, { font: LABF, spacing: 3 });
+            cv.text('ESCOGE UN DATO', 16 + cv.textWidth('RECUADRO ' + (picking + 1), 24, { font: LABF, spacing: 3 }) + 24, y0 + 32, 20, DIM, { font: LABF, spacing: 3 });
+            G.button(cv, ctxTheme, W - 16 - 170, y0 + 2, 170, 44, 'CERRAR', () => { picking = null; return render(); }, { key: 'pickClose' });
+            const cols = 5, rows = Math.ceil(CH.CHANNELS.length / cols), gap = 8, top2 = y0 + 56;
+            const cw = (W - 32 - gap * (cols - 1)) / cols, rh = (bottom - top2 - gap * (rows - 1)) / rows;
+            CH.CHANNELS.forEach((c, i) => {
+                const x = 16 + (i % cols) * (cw + gap), y = top2 + Math.floor(i / cols) * (rh + gap), on = c.id === cur.id;
+                cv.roundRect(x, y, cw, rh, 6, on ? GREEN : '#121821');
+                if (!on) cv.strokeRoundRect(x, y, cw, rh, 6, 1.5, EDGE);
+                let fs = 21;
+                while (fs > 13 && cv.textWidth(c.name, fs, { font: LABF }) > cw - 20) fs--;
+                cv.text(c.name, x + cw / 2, y + rh / 2 + fs * 0.35, fs, on ? '#000000' : WHITE, { font: LABF, align: 'center' });
+                cv.target(x, y, cw, rh, () => { settings.set(key, c.id); picking = null; return render(); }, 'pick' + c.id);
+            });
+        }
         function setSlots(cv, y0, bottom) {
             const n = G.clamp(Math.round(num('gN')) || 4, 1, 8), cx = W / 2;
+            if (picking !== null && picking < n) return pickList(cv, y0, bottom);
             cv.text('RECUADROS', cx - 150, y0 + 34, 22, DIM, { font: LABF, align: 'right', spacing: 3 });
             G.button(cv, ctxTheme, cx - 120, y0 + 2, 46, 46, '-', () => { settings.set('gN', Math.max(1, n - 1)); return render(); }, { key: 'gN-' });
             figure(cv, cx, y0 + 40, String(n), 44, WHITE);
             G.button(cv, ctxTheme, cx + 74, y0 + 2, 46, 46, '+', () => { settings.set('gN', Math.min(8, n + 1)); return render(); }, { key: 'gN+' });
-            const ids = CH.CHANNELS.map((c) => c.id), list = slots(), sb = 40, mb = 30;
+            picking = null;
+            const list = slots(), mb = 30;
             grid(n, y0 + 60, bottom).forEach((b, i) => {
                 const c = list[i], key = 'g' + (i + 1), x = b.x, w = b.w, y = b.y, h = b.h;
-                const pick = (dir) => { const k = ids.indexOf(c.id); settings.set(key, ids[(k + dir + ids.length) % ids.length]); return render(); };
                 cv.roundRect(x, y, w, h, 6, PANEL); cv.strokeRoundRect(x, y, w, h, 6, 2.5, EDGE);
                 cv.roundRect(x + 1.5, y + 1.5, w - 3, 30, 4, '#c9d3e0');
                 cv.text('RECUADRO ' + (i + 1), x + 14, y + 23, 18, '#000000', { font: LABF, spacing: 3 });
-                const ny = c.temp ? y + 30 + (h - 30 - 50) / 2 : y + 30 + (h - 30) / 2;
-                G.button(cv, ctxTheme, x + 10, ny - sb / 2, sb, sb, '<', () => pick(-1), { key: key + '<' });
-                G.button(cv, ctxTheme, x + w - 10 - sb, ny - sb / 2, sb, sb, '>', () => pick(1), { key: key + '>' });
-                let fs = 30;
-                while (fs > 15 && cv.textWidth(c.name, fs, { font: LABF }) > w - 2 * sb - 40) fs--;
-                cv.text(c.name, x + w / 2, ny + fs * 0.35, fs, WHITE, { font: LABF, align: 'center' });
+                const ny = c.temp ? y + 30 + (h - 30 - 50) / 2 : y + 30 + (h - 30) / 2, fh = 50, fx = x + 12, fw = w - 24;
+                // the value's name in a field: a tap opens the list of every value (Jorge 2026-11-28, instead of < >)
+                cv.roundRect(fx, ny - fh / 2, fw, fh, 8, '#161d27');
+                cv.strokeRoundRect(fx, ny - fh / 2, fw, fh, 8, 1.5, '#3a4656');
+                let fs = 28;
+                while (fs > 14 && cv.textWidth(c.name, fs, { font: LABF }) > fw - 70) fs--;
+                cv.text(c.name, fx + 16, ny + fs * 0.35, fs, WHITE, { font: LABF });
+                const ax = fx + fw - 26;
+                cv.fill([[ax - 9, ny - 5], [ax + 9, ny - 5], [ax, ny + 6]], DIM);
+                cv.target(fx, ny - fh / 2, fw, fh, () => { picking = i; return render(); }, key + 'pick');
                 if (!c.temp) return;
                 const def = TEMP_DEF[c.id], ly = y + h - 26;
                 [[def.min, 'MIN'], [def.max, 'MAX']].forEach((p, k) => {
@@ -704,7 +745,7 @@ mgu.run({
         }
 
         if (ui.onVisible) ui.onVisible((name, on) => { if (name === 'MAIN' && !on) ff.tick(false); });
-        if (ctx.onTab) ctx.onTab((i) => { page = i; return render(); });
+        if (ctx.onTab) ctx.onTab((i) => { page = i; picking = null; return render(); });
         ctx.loop('MAIN', 4, render);
         render().then(() => log.info('first frame done')).catch((e) => log.warn('first render: ' + e));
     },

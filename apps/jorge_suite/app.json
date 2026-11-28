@@ -2,7 +2,7 @@
   "id": "jorge_suite",
   "title": "PEREA PERFORMANCE",
   "description": "ESSENTIALS, etanol y density altitud en una sola app",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "vendor": "Perea Performance",
   "loggingId": "OAJ5",
   "mguHmi": [
@@ -498,8 +498,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -520,6 +528,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -546,6 +558,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -564,6 +596,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -603,8 +647,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -625,6 +677,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -651,6 +707,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -669,6 +745,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -708,8 +796,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -730,6 +826,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -756,6 +856,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -774,6 +894,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -813,8 +945,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -835,6 +975,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -861,6 +1005,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -879,6 +1043,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -918,8 +1094,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -940,6 +1124,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -966,6 +1154,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -984,6 +1192,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -1023,8 +1243,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -1045,6 +1273,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -1071,6 +1303,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -1089,6 +1341,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -1128,8 +1392,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -1150,6 +1422,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -1176,6 +1452,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -1194,6 +1490,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",
@@ -1233,8 +1541,16 @@
           "Boost"
         ],
         [
+          "boostMani",
+          "Boost (mani)"
+        ],
+        [
           "boostTarget",
           "Boost target"
+        ],
+        [
+          "boostDev",
+          "Boost deviation"
         ],
         [
           "eth",
@@ -1255,6 +1571,10 @@
         [
           "lambda",
           "Lambda 1"
+        ],
+        [
+          "lambdaTarget",
+          "Lambda target"
         ],
         [
           "stft",
@@ -1281,6 +1601,26 @@
           "Timing Cyl. 1"
         ],
         [
+          "timing2",
+          "Timing Cyl. 2"
+        ],
+        [
+          "timing3",
+          "Timing Cyl. 3"
+        ],
+        [
+          "timing4",
+          "Timing Cyl. 4"
+        ],
+        [
+          "torque",
+          "Torque act. clutch"
+        ],
+        [
+          "throttleReq",
+          "Throttle Pos. Req"
+        ],
+        [
           "throttle",
           "Throttle Position"
         ],
@@ -1299,6 +1639,18 @@
         [
           "speed",
           "Speed"
+        ],
+        [
+          "cat",
+          "Charge air temp."
+        ],
+        [
+          "egt",
+          "Exhaust gas calculated temp."
+        ],
+        [
+          "oilP",
+          "Oil pressure"
         ],
         [
           "amb",

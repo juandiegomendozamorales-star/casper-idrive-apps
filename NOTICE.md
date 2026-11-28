@@ -20,3 +20,11 @@ Las herramientas `tools/idrive7-renderd` (GPU renderer, mgu-render de Robert Nis
 [alexpereap/pereaperformance-idrive7-apps](https://github.com/alexpereap/pereaperformance-idrive7-apps),
 `apps/perea_mhd_flex`, under the MIT License, Copyright (c) 2026 Alex Perea. FLEX FUEL reads the ethanol
 content the same way that app does.
+
+## OBDb BMW signal sets (jorge_suite/channels.js)
+
+Some engine-unit identifiers and their scaling in `apps/jorge_suite/channels.js` (oil pressure, exhaust gas
+calculated temperature, per-cylinder ignition timing, manifold pressure, lambda target, charge air temperature,
+crank torque and others) were taken from the OBDb project's BMW signal sets, https://github.com/OBDb
+(BMW-3-Series, BMW-X5, BMW-M3), licensed CC BY-SA 4.0. Only the facts (identifier, byte position, factor) are
+used; no code or files were copied.

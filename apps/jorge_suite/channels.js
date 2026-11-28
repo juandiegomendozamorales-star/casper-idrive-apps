@@ -5,7 +5,9 @@
  *
  * Only values the car hands out openly are here: the car's own signals, the engine unit's (DME 0x12)
  * standard identifiers (22 F4xx = OBD PIDs over UDS, or OBD service 01), a few BMW identifiers known
- * from idrive7-apps' car_vitals, and the flex fuel / fuel level reads of perea_mhd_flex. All reads.
+ * from idrive7-apps' car_vitals and from OBDb's BMW signal sets (github.com/OBDb, CC BY-SA 4.0: the identifiers
+ * and their scaling, not their code), and the flex fuel / fuel level reads of perea_mhd_flex. All reads.
+ * Untested on Jorge's car unless marked; a value that does not answer shows '--'.
  *
  *   { id, name, unit, dec, scale: [lo, hi] (the bar), temp: true (blue/green/amber/red with MIN/MAX),
  *     src: 'car' | 'ess' | 'da' | 'ff' | 'dme', key (for car/ess/da/ff), cands (for dme: kit/dids.js
@@ -23,24 +25,38 @@ const CHANNELS = [
     // turbo
     { id: 'boost', name: 'Boost', unit: 'psi', dec: 1, scale: [0, 30], src: 'dme', gauge: true, every: 0, cands: [
         { did: 'F470', bytes: 2, at: 3, factor: 0.03125, offset: 0, min: 20, max: 600 },          // kPa absolute
+        { did: '4205', bytes: 2, at: 0, factor: 1 / 128, offset: 0, min: 20, max: 450 },
         { did: '580B', bytes: 2, at: 0, factor: 0.00390625, offset: 0, min: 20, max: 400 },
-        { obd: '0B', bytes: 1, at: 0, factor: 1, offset: 0, min: 20, max: 255 },
+    ] },
+    { id: 'boostMani', name: 'Boost (mani)', unit: 'psi', dec: 1, scale: [0, 30], src: 'dme', gauge: true, every: 0, cands: [
+        { did: '4A2D', bytes: 2, at: 0, factor: 1 / 128, offset: 0, min: 10, max: 450 },           // kPa absolute
+        { obd: '0B', bytes: 1, at: 0, factor: 1, offset: 0, min: 10, max: 255 },
+        { did: 'F40B', bytes: 1, at: 0, factor: 1, offset: 0, min: 10, max: 255 },
     ] },
     { id: 'boostTarget', name: 'Boost target', unit: 'psi', dec: 1, scale: [0, 30], src: 'dme', gauge: true, every: 0, cands: [
         { did: '4AB0', bytes: 2, at: 0, factor: 0.00390625, offset: 0, min: 20, max: 400 },
         { did: 'F470', bytes: 2, at: 1, factor: 0.03125, offset: 0, min: 20, max: 600 },
     ] },
+    { id: 'boostDev', name: 'Boost deviation', unit: 'psi', dec: 1, scale: [-5, 5], src: 'calc', of: ['boostTarget', 'boost'] },
     // fuel
-    { id: 'eth', name: 'Ethanol Content (CAN)', unit: '%', dec: 0, scale: [0, 100], src: 'ff', key: 'can' },
+    { id: 'eth', name: 'Ethanol Content (CAN)', unit: '%', dec: 0, scale: [0, 100], src: 'ff', key: 'can', alt: [
+        { did: '40CB', bytes: 1, at: 13, factor: 0.5, offset: 0, min: 0, max: 100 },               // the engine unit's copy of the sensor's CAN message
+    ] },
     { id: 'ethActive', name: 'Ethanol Content (Active)', unit: '%', dec: 0, scale: [0, 100], src: 'ff', key: 'active' },
     { id: 'fuel', name: 'Fuel level', unit: 'gal', dec: 1, scale: [0, 15.6], src: 'ff', key: 'litres', conv: (l) => l / 3.785411784 },
     { id: 'rail', name: 'Rail pressure mean 1', unit: 'psi', dec: 0, scale: [0, 5800], src: 'dme', every: 0, conv: (b) => b * PSI_PER_BAR, cands: [
         { did: 'F423', bytes: 2, at: 0, factor: 0.1, offset: 0, min: 0, max: 500 },                 // bar
+        { did: '56D7', bytes: 2, at: 0, factor: 0.02, offset: 0, min: 0, max: 500 },
         { obd: '23', bytes: 2, at: 0, factor: 0.1, offset: 0, min: 0, max: 500 },
     ] },
     { id: 'lambda', name: 'Lambda 1', unit: '', dec: 2, scale: [0.6, 1.2], src: 'dme', every: 0, cands: [
+        { did: '5889', bytes: 2, at: 0, factor: 16 / 65536, offset: 0, min: 0.3, max: 2 },
         { obd: '34', bytes: 2, at: 0, factor: 2 / 65536, offset: 0, min: 0.3, max: 2 },
         { obd: '24', bytes: 2, at: 0, factor: 2 / 65536, offset: 0, min: 0.3, max: 2 },
+    ] },
+    { id: 'lambdaTarget', name: 'Lambda target', unit: '', dec: 2, scale: [0.6, 1.2], src: 'dme', every: 0, cands: [
+        { did: '5816', bytes: 2, at: 0, factor: 16 / 65536, offset: 0, min: 0.3, max: 2 },
+        { obd: '44', bytes: 2, at: 0, factor: 2 / 65536, offset: 0, min: 0.3, max: 2 },
     ] },
     { id: 'stft', name: 'STFT 1', unit: '%', dec: 1, scale: [-25, 25], src: 'dme', every: 500, cands: [
         { obd: '06', bytes: 1, at: 0, factor: 100 / 128, offset: -100, min: -100, max: 100 },
@@ -57,8 +73,25 @@ const CHANNELS = [
         { did: '480C', bytes: 2, at: 0, factor: 0.0234375, offset: 0, min: 0, max: 250 },
     ] },
     { id: 'timing', name: 'Timing Cyl. 1', unit: '°', dec: 1, scale: [-10, 30], src: 'dme', every: 0, cands: [
+        { did: '4A49', bytes: 2, at: 0, factor: 0.1, offset: 0, signed: true, min: -40, max: 60 },
         { obd: '0E', bytes: 1, at: 0, factor: 0.5, offset: -64, min: -64, max: 63.5 },
         { did: 'F40E', bytes: 1, at: 0, factor: 0.5, offset: -64, min: -64, max: 63.5 },
+    ] },
+    { id: 'timing2', name: 'Timing Cyl. 2', unit: '°', dec: 1, scale: [-10, 30], src: 'dme', every: 0, cands: [
+        { did: '4A4A', bytes: 2, at: 0, factor: 0.1, offset: 0, signed: true, min: -40, max: 60 },
+    ] },
+    { id: 'timing3', name: 'Timing Cyl. 3', unit: '°', dec: 1, scale: [-10, 30], src: 'dme', every: 0, cands: [
+        { did: '4A4C', bytes: 2, at: 0, factor: 0.1, offset: 0, signed: true, min: -40, max: 60 },
+    ] },
+    { id: 'timing4', name: 'Timing Cyl. 4', unit: '°', dec: 1, scale: [-10, 30], src: 'dme', every: 0, cands: [
+        { did: '4A4D', bytes: 2, at: 0, factor: 0.1, offset: 0, signed: true, min: -40, max: 60 },
+    ] },
+    { id: 'torque', name: 'Torque act. clutch', unit: 'Nm', dec: 0, scale: [0, 700], src: 'dme', every: 0, cands: [
+        { did: '58BA', bytes: 2, at: 0, factor: 0.1, offset: 0, min: -200, max: 1500 },
+    ] },
+    { id: 'throttleReq', name: 'Throttle Pos. Req', unit: '%', dec: 0, scale: [0, 100], src: 'dme', every: 0, cands: [
+        { obd: '4C', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
+        { did: 'F44C', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
     ] },
     { id: 'throttle', name: 'Throttle Position', unit: '%', dec: 0, scale: [0, 100], src: 'dme', every: 0, cands: [
         { obd: '11', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
@@ -67,6 +100,7 @@ const CHANNELS = [
     { id: 'pedal', name: 'Accel Ped. Pos.', unit: '%', dec: 0, scale: [0, 100], src: 'dme', every: 0, cands: [
         { obd: '49', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
         { did: 'F449', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100 },
+        { did: '480B', bytes: 2, at: 0, factor: 100 / 8192, offset: 0, signed: true, min: -1, max: 101 },
     ] },
     { id: 'maf', name: 'MAF', unit: 'g/s', dec: 0, scale: [0, 400], src: 'dme', every: 0, cands: [
         { obd: '10', bytes: 2, at: 0, factor: 0.01, offset: 0, min: 0, max: 655 },
@@ -75,10 +109,21 @@ const CHANNELS = [
     { id: 'gear', name: 'Gear', unit: '', dec: 0, scale: [0, 8], src: 'car', key: 'gear' },
     { id: 'speed', name: 'Speed', unit: 'km/h', dec: 0, scale: [0, 300], src: 'car', key: 'speed' },
     // other
+    { id: 'cat', name: 'Charge air temp.', unit: '°F', dec: 0, scale: [40, 200], src: 'dme', every: 1000, conv: F, cands: [
+        { did: '59D4', bytes: 2, at: 0, factor: 3 / 128, offset: -273, signed: true, min: -40, max: 150 },
+        { obd: '77', bytes: 1, at: 1, factor: 1, offset: -40, min: -40, max: 150 },
+    ] },
+    { id: 'egt', name: 'Exhaust gas calculated temp.', unit: '°F', dec: 0, scale: [300, 1900], src: 'dme', every: 500, conv: F, cands: [
+        { did: '4C5B', bytes: 2, at: 2, factor: 0.1, offset: 0, min: 0, max: 1200 },
+    ] },
+    { id: 'oilP', name: 'Oil pressure', unit: 'psi', dec: 0, scale: [0, 100], src: 'dme', every: 0, conv: (b) => b * PSI_PER_BAR, cands: [
+        { did: '586F', bytes: 2, at: 0, factor: 0.001, offset: 0, min: 0, max: 12 },
+    ] },
     { id: 'amb', name: 'Amb. temp.', unit: '°F', dec: 0, scale: [0, 120], src: 'da', key: 'ambient', conv: F },
     { id: 'batt', name: 'Battery volt.', unit: 'V', dec: 1, scale: [10, 16], src: 'dme', every: 2000, cands: [
         { obd: '42', bytes: 2, at: 0, factor: 0.001, offset: 0, min: 5, max: 20 },
         { did: 'F442', bytes: 2, at: 0, factor: 0.001, offset: 0, min: 5, max: 20 },
+        { did: '402B', bytes: 2, at: 2, factor: 1 / 4000, offset: 6, min: 5, max: 20 },
     ] },
 ];
 // boost is shown over the outside air (gauge pressure): the engine unit's barometer, read now and then
