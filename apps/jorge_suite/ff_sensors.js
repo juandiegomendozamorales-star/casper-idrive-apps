@@ -60,6 +60,13 @@ class Sensors {
         return d.fresh ? d.value : null;
     }
 
+    /** The flex fuel sensor's reading as MHD logs it: 'can' (Ethanol Content (CAN)) or 'active' (Ethanol Content (Active)). */
+    ethPart(which) {
+        const v = this._view();
+        if (!v || v.stale) return null;
+        return which === 'active' ? v.active : v.can;
+    }
+
     litres() { const v = this._view(); return v ? v.fuel.dme : null; }
     fuelPct() { return null; }
 

@@ -36,7 +36,13 @@ class Sensors {
         this.next = { iat: 0, gb: 0 };
         this.miss = { iat: 0, gb: 0 };
         this.logged = {};
+        // the other values Jorge picked for his boxes (channels.js, src 'dme'): wanted() -> { iat, gb, extra: [channel] }
+        this.wanted = () => ({ iat: true, gb: true, extra: [] });
+        this.x = {}; this.xAt = {}; this.xNext = {}; this.xMiss = {}; this.turn = 0;
     }
+
+    /** A picked engine-unit value (base unit), or null when stale / not answering. */
+    extra(id) { return Date.now() - (this.xAt[id] || 0) < FRESH_MS ? this.x[id] : null; }
 
     start() {
         const signals = this.ctx.signals;
@@ -73,16 +79,22 @@ class Sensors {
     async _loop() {
         for (;;) {
             try {
-                if (this.visible()) {
+                const w = this.visible() ? this.wanted() : null;
+                if (w) {
                     const now = Date.now();
-                    if (now >= this.next.iat) await this._read('iat', DME, IAT, IAT_MS);
-                    if (Date.now() >= this.next.gb) await this._read('gb', EGS, GEARBOX, GB_MS);
+                    if (w.iat && now >= this.next.iat) await this._read('iat', DME, IAT, IAT_MS);
+                    if (w.gb && Date.now() >= this.next.gb) await this._read('gb', EGS, GEARBOX, GB_MS);
+                    // one picked value per turn, the most overdue first, so every box keeps moving
+                    const due = w.extra.filter((c) => Date.now() >= (this.xNext[c.id] || 0));
+                    if (due.length) await this._readExtra(due[this.turn++ % due.length]);
                 }
             } catch (e) {
                 // the head unit's transport comes up a few seconds after the app: try again soon
                 this._once('err', 'read: ' + (e && e.message || e) + ' (trying again)');
             }
-            await new Promise((r) => setTimeout(r, 250));
+            // with picked values to keep up: next request right away (the link spaces requests itself)
+            const busy = this.visible() && this.wanted().extra.length;
+            await new Promise((r) => setTimeout(r, busy ? 20 : 250));
         }
     }
 
@@ -98,6 +110,20 @@ class Sensors {
             this.miss[key]++;
             this._once(key + 'none', key + ': no answer (' + JSON.stringify(this.rd.raws) + ')');
             this.next[key] = now + (this.miss[key] >= 3 ? SLOW_MS : every);
+        }
+    }
+
+    async _readExtra(c) {
+        const v = await this.rd.value(c.id, c.cands);
+        const now = Date.now();
+        if (v !== null) {
+            this.x[c.id] = v; this.xAt[c.id] = now; this.xMiss[c.id] = 0;
+            this._once(c.id + 'ok', c.id + ' -> ' + v);
+            this.xNext[c.id] = now + (c.every || 0);
+        } else {
+            this.xMiss[c.id] = (this.xMiss[c.id] || 0) + 1;
+            this._once(c.id + 'none', c.id + ': no answer (' + JSON.stringify(this.rd.raws) + ')');
+            this.xNext[c.id] = now + (this.xMiss[c.id] >= 3 ? SLOW_MS : 1000);
         }
     }
 

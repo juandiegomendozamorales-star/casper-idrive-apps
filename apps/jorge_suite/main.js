@@ -23,6 +23,7 @@ const DaSensors = require('./da_sensors').Sensors;
 const FfSensors = require('./ff_sensors').Sensors;
 const LOGO = require('./logo');
 const Health = require('./health');
+const CH = require('./channels');
 
 const W = 1600, H = 520;
 const BG = '#030507', WHITE = '#ffffff', DIM = '#8fa0b8', FAINT = '#5d6a7e', TRACK = '#141c28';
@@ -64,7 +65,7 @@ const thousands = (n) => { const s = String(Math.abs(Math.round(n))).replace(/\B
 mgu.run({
     async start(ctx) {
         const { ui, settings, log } = ctx;
-        const car = new Car(ctx, ['rpm', 'speed', 'temps']);
+        const car = new Car(ctx, ['rpm', 'speed', 'temps', 'gear']);
         let page = P_ESS, ctxTheme = null;
         const shown = (pages) => () => ui.isVisible('MAIN') && pages.indexOf(page) >= 0;
         const ess = new EssSensors(ctx, log, shown([P_ESS])).start();
@@ -72,6 +73,50 @@ mgu.run({
         const ff = new FfSensors(ctx, log).start();
         const num = (k) => Number(settings.get(k));
         const health = Health.start(log, () => TABS[page]);
+
+        /* ---------- ESSENTIALS boxes: how many (gN) and which value in each (g1..g8, channels.js) ---------- */
+        const TEMP_DEF = {};
+        VALUES.forEach((v) => { TEMP_DEF[v.key] = v; });
+        function slots() {
+            const n = G.clamp(Math.round(num('gN')) || 4, 1, 8), out = [];
+            for (let i = 1; i <= n; i++) out.push(CH.BY_ID[settings.get('g' + i)] || CH.BY_ID[CH.DEFAULT_SLOTS[i - 1]]);
+            return out;
+        }
+        ess.wanted = () => {
+            const s = slots(), extra = s.filter((c) => c.src === 'dme');
+            if (extra.some((c) => c.gauge)) extra.push(CH.BARO);
+            return { iat: s.some((c) => c.id === 'iat'), gb: s.some((c) => c.id === 'gb'), extra };
+        };
+        const usesFf = () => slots().some((c) => c.src === 'ff');
+        /** A picked value in the unit shown, or null. */
+        function chValue(c, d, tv) {
+            if (d.demo) {
+                const t = Date.now() / 1000, w = (a, b, p) => a + (b - a) * (0.5 + 0.5 * Math.sin(t / p));
+                const demo = { boost: w(2, 22, 5), boostTarget: w(4, 23, 5), eth: 38, ethActive: 38, fuel: 6.0, rail: w(1200, 4400, 6),
+                    lambda: w(0.8, 1.0, 4), stft: w(-4, 4, 3), ltft: 1.6, rpm: w(900, 6800, 5), load: w(20, 160, 5), loadReq: w(25, 165, 5),
+                    timing: w(2, 14, 4), throttle: w(5, 100, 5), pedal: w(0, 100, 5), maf: w(8, 320, 5), gear: 3, speed: w(40, 180, 9),
+                    amb: 66, batt: 14.2 };
+                if (c.temp) return tv[c.id];
+                return demo[c.id];
+            }
+            if (c.temp) return tv[c.id];
+            let v = null;
+            if (c.src === 'car') v = d[c.key];
+            else if (c.src === 'da') v = da[c.key]();
+            else if (c.src === 'ff') v = c.key === 'litres' ? ff.litres() : ff.ethPart(c.key);
+            else if (c.src === 'dme') {
+                v = ess.extra(c.id);
+                if (G.isNum(v) && c.gauge) { const b = ess.extra('baro'); v = (v - (G.isNum(b) ? b : 101.3)) * CH.PSI_PER_KPA; }
+            }
+            if (!G.isNum(v)) return null;
+            return c.conv ? c.conv(v) : v;
+        }
+        function chText(c, v) {
+            if (!G.isNum(v)) return '--';
+            if (c.id === 'gear') return v < 0 ? 'R' : v === 0 ? 'N' : String(Math.round(v));
+            const s = v.toFixed(c.dec);
+            return c.dec === 0 && Math.abs(v) >= 1000 ? thousands(Math.round(v)) : s;
+        }
 
         /* ---------- the logo in the background ---------- */
         function watermark(cv, top, bottom) {
@@ -391,11 +436,14 @@ mgu.run({
             cv.blit(L, lx, y);
         }
         /** A box with a coloured header bar (black words on it); returns the body's top. */
-        function panel(cv, x, y, w, h, label, hcol) {
+        function panel(cv, x, y, w, h, label, hcol, tight) {
             cv.roundRect(x, y, w, h, 6, PANEL);
             cv.strokeRoundRect(x, y, w, h, 6, 2.5, EDGE);
             cv.roundRect(x + 1.5, y + 1.5, w - 3, HEAD_H, 4, hcol);
-            cv.text(label, x + 18, y + HEAD_H - 11, 25, '#000000', { font: LABF, spacing: 4 });
+            let ls = 25;
+            const sp = tight ? 1 : 4;          // channel names (their own case, e.g. 'Oil temp'): no wide spacing
+            while (ls > 16 && cv.textWidth(label, ls, { font: LABF, spacing: sp }) > w - 36) ls--;
+            cv.text(label, x + 18, y + HEAD_H - 11, ls, '#000000', { font: LABF, spacing: sp });
             return y + HEAD_H;
         }
         /** The big figure (Saira) and its unit (Barlow), centred on cx as one. */
@@ -437,7 +485,7 @@ mgu.run({
         };
         /** A value box: header, big figure in the middle, segment bar, bottom line. */
         function valueBox(cv, b, o) {
-            const body = panel(cv, b.x, b.y, b.w, b.h, o.label, o.hcol);
+            const body = panel(cv, b.x, b.y, b.w, b.h, o.label, o.hcol, o.tight);
             const barY = b.y + b.h - 78, mid = (body + barY - (o.status ? 40 : 0)) / 2;
             const size = fitSize(cv, o.big, o.max || 150, b.w - 50, o.unit, o.usize || 34);
             figure(cv, b.x + b.w / 2, mid + size * 0.36, o.big, size, o.col || WHITE, o.unit, o.usize || 34);
@@ -450,19 +498,65 @@ mgu.run({
             row3(cv, b.x, b.y + b.h - 18, b.w, o.row || []);
         }
 
+        /** A smaller box for 5 to 8 values: the status beside the name, a thin bar, MIN / MAX only for the temperatures. */
+        function compactBox(cv, b, o) {
+            const HH = 32;
+            cv.roundRect(b.x, b.y, b.w, b.h, 6, PANEL);
+            cv.strokeRoundRect(b.x, b.y, b.w, b.h, 6, 2.5, EDGE);
+            cv.roundRect(b.x + 1.5, b.y + 1.5, b.w - 3, HH, 4, o.hcol);
+            let ls = 22;
+            while (ls > 14 && cv.textWidth(o.label, ls, { font: LABF, spacing: 1 }) > b.w - 28) ls--;
+            cv.text(o.label, b.x + 14, b.y + HH - 9, ls, '#000000', { font: LABF, spacing: 1 });
+            const barY = b.y + b.h - 50, body = b.y + HH, mid = (body + barY) / 2;
+            const size = fitSize(cv, o.big, 92, b.w - 40, o.unit, 26);
+            figure(cv, b.x + b.w / 2, mid + size * 0.36, o.big, size, WHITE, o.unit, 26);
+            segBar(cv, b.x + 14, barY, b.w - 28, 16, 20, o.frac, o.segCol);
+            if (o.lo != null) {
+                cv.text('MIN ' + o.lo, b.x + 14, b.y + b.h - 11, 17, DIM, { font: LABF, spacing: 1.5 });
+                cv.text('MAX ' + o.hi, b.x + b.w - 14, b.y + b.h - 11, 17, DIM, { font: LABF, align: 'right', spacing: 1.5 });
+                if (o.status) {                    // between MIN and MAX, in the state's colour
+                    const room = b.w - 28 - cv.textWidth('MIN ' + o.lo, 17, { font: LABF, spacing: 1.5 }) - cv.textWidth('MAX ' + o.hi, 17, { font: LABF, spacing: 1.5 }) - 24;
+                    let ss = 17;
+                    while (ss > 11 && cv.textWidth(o.status, ss, { font: LABF, spacing: 1 }) > room) ss--;
+                    cv.text(o.status, b.x + b.w / 2, b.y + b.h - 11, ss, o.scol, { font: LABF, align: 'center', spacing: 1 });
+                }
+            }
+        }
+        /** n boxes: one row up to 4, two rows (the second centred) from 5. */
+        function grid(n, top, bottom) {
+            if (n <= 4) return boxes(n, top, bottom);
+            const per = Math.ceil(n / 2), gap = 14, rh = (bottom - top - gap) / 2, w = (W - 32 - gap * (per - 1)) / per, out = [];
+            for (let i = 0; i < n; i++) {
+                const r = i < per ? 0 : 1, c = r ? i - per : i, inRow = r ? n - per : per;
+                const x0 = 16 + ((per - inRow) * (w + gap)) / 2;
+                out.push({ x: x0 + c * (w + gap), y: top + 2 + r * (rh + gap), w, h: rh - 4 });
+            }
+            return out;
+        }
         function pEss(cv, top, bottom, d) {
-            const v = essValues(d), now = Date.now();
-            track(v);
-            boxes(4, top, bottom).forEach((b, i) => {
-                const def = VALUES[i], j = judge(def, v[def.key], d);
-                const s = G.isNum(v[def.key]) ? String(Math.round(G.smooth(def.key, v[def.key]))) : '--';
-                const blink = j.alert && Math.sin(now / 180) < 0;
-                const zone = (f) => {
-                    const t = j.barLo + (j.barHi - j.barLo) * f;
-                    return t > j.hi ? RED : t >= j.warn ? AMBER : t < j.lo && def.cold ? COLD : GREEN;
-                };
-                valueBox(cv, b, { label: def.label, hcol: blink ? '#5a1010' : j.col, big: s, unit: '°F', max: 150, frac: j.fill, segCol: zone, segs: 20,
-                    status: [j.text, j.col], row: [['MIN', String(j.lo)], null, ['MAX', String(j.hi)]] });
+            const tv = essValues(d), now = Date.now(), list = slots(), small = list.length > 4;
+            track(tv);
+            grid(list.length, top, bottom).forEach((b, i) => {
+                const c = list[i], v = chValue(c, d, tv);
+                let o;
+                if (c.temp) {
+                    const def = TEMP_DEF[c.id], j = judge(def, v, d);
+                    const blink = j.alert && Math.sin(now / 180) < 0;
+                    const zone = (f) => {
+                        const t = j.barLo + (j.barHi - j.barLo) * f;
+                        return t > j.hi ? RED : t >= j.warn ? AMBER : t < j.lo && def.cold ? COLD : GREEN;
+                    };
+                    o = { label: c.name, hcol: blink ? '#5a1010' : j.col, big: G.isNum(v) ? String(Math.round(G.smooth(c.id, v))) : '--', unit: c.unit,
+                        frac: j.fill, segCol: zone, status: j.text, scol: j.col, lo: j.lo, hi: j.hi };
+                } else {
+                    const sc = c.id === 'fuel' ? [0, num('tank') || 15.6] : c.scale;
+                    const sv = G.isNum(v) && c.id !== 'gear' ? G.smooth(c.id, v) : v;
+                    o = { label: c.name, hcol: G.isNum(v) ? GREEN : DIM, big: chText(c, sv), unit: c.unit,
+                        frac: G.isNum(v) ? G.clamp((v - sc[0]) / (sc[1] - sc[0]), 0, 1) : null, segCol: () => GREEN };
+                }
+                if (small) return compactBox(cv, b, o);
+                valueBox(cv, b, { tight: true, label: o.label, hcol: o.hcol, big: o.big, unit: o.unit, max: 150, frac: o.frac, segCol: o.segCol, segs: 20,
+                    status: [o.status || '', o.scol || GREEN], row: o.lo != null ? [['MIN', String(o.lo)], null, ['MAX', String(o.hi)]] : [] });
             });
         }
         function pEth(cv, top, bottom, n) {
@@ -521,11 +615,42 @@ mgu.run({
             cv.text('TRAP', b.x + b.w / 2, y2 - 52, 20, DIM, { font: LABF, align: 'center', spacing: 3 });
             figure(cv, b.x + b.w / 2, y2 + 80 * 0.36, f ? String(Math.round(trap * f * tk)) : '--', 80, GREEN, f ? tu : '', 28);
         }
+        /** AJUSTES > ESSENTIALS: how many boxes, the value in each (< >), MIN / MAX for the temperatures. */
+        function setSlots(cv, y0, bottom) {
+            const n = G.clamp(Math.round(num('gN')) || 4, 1, 8), cx = W / 2;
+            cv.text('RECUADROS', cx - 150, y0 + 34, 22, DIM, { font: LABF, align: 'right', spacing: 3 });
+            G.button(cv, ctxTheme, cx - 120, y0 + 2, 46, 46, '-', () => { settings.set('gN', Math.max(1, n - 1)); return render(); }, { key: 'gN-' });
+            figure(cv, cx, y0 + 40, String(n), 44, WHITE);
+            G.button(cv, ctxTheme, cx + 74, y0 + 2, 46, 46, '+', () => { settings.set('gN', Math.min(8, n + 1)); return render(); }, { key: 'gN+' });
+            const ids = CH.CHANNELS.map((c) => c.id), list = slots(), sb = 40, mb = 30;
+            grid(n, y0 + 60, bottom).forEach((b, i) => {
+                const c = list[i], key = 'g' + (i + 1), x = b.x, w = b.w, y = b.y, h = b.h;
+                const pick = (dir) => { const k = ids.indexOf(c.id); settings.set(key, ids[(k + dir + ids.length) % ids.length]); return render(); };
+                cv.roundRect(x, y, w, h, 6, PANEL); cv.strokeRoundRect(x, y, w, h, 6, 2.5, EDGE);
+                cv.roundRect(x + 1.5, y + 1.5, w - 3, 30, 4, '#c9d3e0');
+                cv.text('RECUADRO ' + (i + 1), x + 14, y + 23, 18, '#000000', { font: LABF, spacing: 3 });
+                const ny = c.temp ? y + 30 + (h - 30 - 50) / 2 : y + 30 + (h - 30) / 2;
+                G.button(cv, ctxTheme, x + 10, ny - sb / 2, sb, sb, '<', () => pick(-1), { key: key + '<' });
+                G.button(cv, ctxTheme, x + w - 10 - sb, ny - sb / 2, sb, sb, '>', () => pick(1), { key: key + '>' });
+                let fs = 30;
+                while (fs > 15 && cv.textWidth(c.name, fs, { font: LABF }) > w - 2 * sb - 40) fs--;
+                cv.text(c.name, x + w / 2, ny + fs * 0.35, fs, WHITE, { font: LABF, align: 'center' });
+                if (!c.temp) return;
+                const def = TEMP_DEF[c.id], ly = y + h - 26;
+                [[def.min, 'MIN'], [def.max, 'MAX']].forEach((p, k) => {
+                    const hx = x + (k ? w * 0.75 : w * 0.25), sk = p[0];
+                    G.button(cv, ctxTheme, hx - 84, ly - mb / 2, mb, mb, '-', () => stepList(sk, -1), { key: key + sk + '-' });
+                    cv.text(p[1] + ' ' + settings.get(sk), hx, ly + 6, 17, DIM, { font: LABF, align: 'center', spacing: 1 });
+                    G.button(cv, ctxTheme, hx + 54, ly - mb / 2, mb, mb, '+', () => stepList(sk, 1), { key: key + sk + '+' });
+                });
+            });
+        }
         function pSet(cv, top, bottom) {
             const gw = 260, gx0 = W / 2 - gw * 1.5;
             GROUPS.forEach((g, i) => {
                 G.button(cv, ctxTheme, gx0 + gw * i + 10, top + 2, gw - 20, 46, g, () => { group = i; return render(); }, { key: 'grp' + i, primary: i === group });
             });
+            if (group === 0) return setSlots(cv, top + 58, bottom);
             const items = ITEMS[group], bs = 64;
             boxes(items.length, top + 58, bottom).forEach((b, i) => {
                 const s = items[i], body = panel(cv, b.x, b.y, b.w, b.h, s.label, '#c9d3e0');
@@ -552,7 +677,7 @@ mgu.run({
 
         function render() {
             const t = ctxTheme = ctx.theme(), d = car.data();
-            ff.tick(ui.isVisible('MAIN') && (page === P_ETH || page === P_CALC || (page === P_SET && group === 1)), !!d.demo);
+            ff.tick(ui.isVisible('MAIN') && (page === P_ETH || page === P_CALC || (page === P_SET && group === 1) || (page === P_ESS && usesFf())), !!d.demo);
             const cv = ctx.canvas(W, H).clear(BG);
             const top = G.TOP + 6; let bottom = G.pageBottom(cv) - 4;
             if (LOOK === 'panel') {

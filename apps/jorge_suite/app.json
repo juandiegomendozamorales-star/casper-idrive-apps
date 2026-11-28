@@ -2,7 +2,7 @@
   "id": "jorge_suite",
   "title": "PEREA PERFORMANCE",
   "description": "ESSENTIALS, etanol y density altitud en una sola app",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "vendor": "Perea Performance",
   "loggingId": "OAJ5",
   "mguHmi": [
@@ -35,6 +35,11 @@
     "de.bmw.infrastructure.EnvironmentalInformation": {
       "ExteriorTemperature": "s",
       "UnitBN2020": "rs"
+    },
+    "de.bmw.infrastructure.VehicleInformation": {
+      "statusGearboxDrive": "s",
+      "DataPowerTrain2": "s",
+      "_optional": "cambio engranado (Gear)"
     }
   },
   "screens": [
@@ -445,6 +450,863 @@
         [
           "mph",
           "mph"
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "gN",
+      "label": "Recuadros en ESSENTIALS",
+      "type": "number",
+      "default": 4,
+      "steps": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g1",
+      "label": "Recuadro 1",
+      "type": "choice",
+      "default": "oil",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g2",
+      "label": "Recuadro 2",
+      "type": "choice",
+      "default": "coolant",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g3",
+      "label": "Recuadro 3",
+      "type": "choice",
+      "default": "gb",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g4",
+      "label": "Recuadro 4",
+      "type": "choice",
+      "default": "iat",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g5",
+      "label": "Recuadro 5",
+      "type": "choice",
+      "default": "boost",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g6",
+      "label": "Recuadro 6",
+      "type": "choice",
+      "default": "timing",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g7",
+      "label": "Recuadro 7",
+      "type": "choice",
+      "default": "rail",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "key": "g8",
+      "label": "Recuadro 8",
+      "type": "choice",
+      "default": "lambda",
+      "options": [
+        [
+          "oil",
+          "Oil temp"
+        ],
+        [
+          "coolant",
+          "Coolant"
+        ],
+        [
+          "gb",
+          "Transmission temp"
+        ],
+        [
+          "iat",
+          "IAT"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "boostTarget",
+          "Boost target"
+        ],
+        [
+          "eth",
+          "Ethanol Content (CAN)"
+        ],
+        [
+          "ethActive",
+          "Ethanol Content (Active)"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ],
+        [
+          "rail",
+          "Rail pressure mean 1"
+        ],
+        [
+          "lambda",
+          "Lambda 1"
+        ],
+        [
+          "stft",
+          "STFT 1"
+        ],
+        [
+          "ltft",
+          "LTFT 1"
+        ],
+        [
+          "rpm",
+          "RPM"
+        ],
+        [
+          "load",
+          "Load act."
+        ],
+        [
+          "loadReq",
+          "Load req."
+        ],
+        [
+          "timing",
+          "Timing Cyl. 1"
+        ],
+        [
+          "throttle",
+          "Throttle Position"
+        ],
+        [
+          "pedal",
+          "Accel Ped. Pos."
+        ],
+        [
+          "maf",
+          "MAF"
+        ],
+        [
+          "gear",
+          "Gear"
+        ],
+        [
+          "speed",
+          "Speed"
+        ],
+        [
+          "amb",
+          "Amb. temp."
+        ],
+        [
+          "batt",
+          "Battery volt."
         ]
       ],
       "hidden": true
